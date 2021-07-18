@@ -317,54 +317,107 @@ int rendertype2 = GL_TRIANGLES;
 int rendertype3 = GL_TRIANGLES;
 int rendertype4 = GL_TRIANGLES;
 
-void WalldrawYh(int worldMatrixLocation) {
+void WalldrawYh(int worldMatrixLocation, GLFWwindow* window, bool status[], float angle) {
 
+    if (status[0]) { flag0 = true; }
 
-    mat4 pillarWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 8.0f, -25.0f)) * scale(mat4(1.0f), vec3(18.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 16.0f, -25.0f)) * scale(mat4(1.0f), vec3(18.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-8.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 10.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(8.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 10.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(6.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(6.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-6.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-6.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(2.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(2.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-2.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-2.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(0.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(4.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
-    pillarWorldMatrix = translate(mat4(1.0f), vec3(-4.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
-    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &pillarWorldMatrix[0][0]);
-    glDrawArrays(GL_TRIANGLES, 10, 36);
+    mat4 wallMat;
+    mat4 wallSetMatrix = translate(mat4(1.0f), vec3(0, 0, 0)) * rotate(mat4(1.0f), radians(angle), vec3(0, 1.0f, 0));
+    mat4 groupMat = translate(mat4(1.0f), vec3(0, 0,0)) * rotate(mat4(1.0f), radians(angle), vec3(0, 1.0f, 0));;
+    groupMat = scale(groupMat, vec3(zoom_size0, zoom_size0, zoom_size0));
+    mat4 world_mat;
+
+    wallMat = translate(mat4(1.0f), vec3(0.0f, 8.0f, -25.0f)) * scale(mat4(1.0f), vec3(18.0f, 2.0f, 0.0f));
+    
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(0.0f, 16.0f, -25.0f)) * scale(mat4(1.0f), vec3(18.0f, 2.0f, 0.0f));
+
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-8.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 10.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(8.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 10.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(6.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(6.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-6.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-6.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(2.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(2.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-2.0f, 14.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-2.0f, 10.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(0.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(4.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
+
+    wallMat = translate(mat4(1.0f), vec3(-4.0f, 12.0f, -25.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 0.0f));
+    world_mat = groupMat * wallSetMatrix * wallMat;
+
+    glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &world_mat[0][0]);
+    glDrawArrays(rendertype0, CubeVertexLocation, 36);
 }
 
     
@@ -574,7 +627,7 @@ int main(int argc, char* argv[])
 
         drawGrid(worldMatrixLocation);
 
-        WalldrawYh(worldMatrixLocation);
+        WalldrawYh(worldMatrixLocation,window, status, Angle0);
 
         drawYeeho(worldMatrixLocation, window, coor0, status, Angle0);
 
