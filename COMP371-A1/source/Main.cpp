@@ -706,60 +706,17 @@ int main(int argc, char* argv[]) {
 
 
         }
-
+        // P to render as points
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-            if (status[0]) {
-                rendertype0 = GL_POINTS;
-            }
-            if (status[1]) {
-                rendertype1 = GL_POINTS;
-            }
-            if (status[2]) {
-                rendertype2 = GL_POINTS;
-            }
-            if (status[3]) {
-                rendertype3 = GL_POINTS;
-            }
-
-            if (status[4]) {
-                rendertype4 = GL_POINTS;
-            }
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
         }
+         // L to render as lines
         if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-            if (status[0]) {
-                rendertype0 = GL_LINE_LOOP;
-            }
-            if (status[1]) {
-                rendertype1 = GL_LINE_LOOP;
-            }
-            if (status[2]) {
-                rendertype2 = GL_LINE_LOOP;
-            }
-            if (status[3]) {
-                rendertype3 = GL_LINE_LOOP;
-            }
-
-            if (status[4]) {
-                rendertype4 = GL_LINE_LOOP;
-            }
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
-        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
-            if (status[0]) {
-                rendertype0 = GL_TRIANGLES;
-            }
-            if (status[1]) {
-                rendertype1 = GL_TRIANGLES;
-            }
-            if (status[2]) {
-                rendertype2 = GL_TRIANGLES;
-            }
-            if (status[3]) {
-                rendertype3 = GL_TRIANGLES;
-            }
-
-            if (status[4]) {
-                rendertype4 = GL_TRIANGLES;
-            }
+        // F or T to render as filled shapes
+        if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
         // This was solution for Lab02 - Moving camera exercise
