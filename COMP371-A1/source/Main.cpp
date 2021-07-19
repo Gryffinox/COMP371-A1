@@ -20,8 +20,6 @@
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
 #include <glm/common.hpp>
 
-#include "Projectile.h"
-
 using namespace glm;
 using namespace std;
 
@@ -565,10 +563,7 @@ int main(int argc, char* argv[]) {
     // Enable Backface culling
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-
-    // Container for projectiles to be implemented in tutorial
-    list<Projectile> projectileList;
-
+  
     int vbo = createVertexArrayObject();
 
     // Entering Game Loop
