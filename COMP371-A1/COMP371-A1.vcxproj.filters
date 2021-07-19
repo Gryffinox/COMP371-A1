@@ -15,27 +15,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\Main.cpp">
+    <ClInclude Include="camera.h">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Projectile.cpp">
+    </ClInclude>
+    <ClInclude Include="colors.h">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Calvin.cpp">
+    </ClInclude>
+    <ClInclude Include="model.h">
       <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="source\Projectile.h">
-      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="source\FragmentShader.glsl">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="Calvin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fragmentShader.fs">
+      <Filter>Source Files</Filter>
     </None>
-    <None Include="source\VertexShader.glsl">
-      <Filter>Resource Files</Filter>
+    <None Include="vertexShader.vs">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
 </Project>

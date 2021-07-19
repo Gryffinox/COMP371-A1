@@ -19,16 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\Calvin.cpp" />
-    <ClCompile Include="source\Main.cpp" />
-    <ClCompile Include="source\Projectile.cpp" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="colors.h" />
+    <ClInclude Include="model.h" />
+    <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\Projectile.h" />
+    <ClCompile Include="Calvin.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="source\FragmentShader.glsl" />
-    <None Include="source\VertexShader.glsl" />
+    <None Include="fragmentShader.fs" />
+    <None Include="vertexShader.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
