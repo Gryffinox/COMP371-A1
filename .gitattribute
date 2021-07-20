@@ -1,0 +1,12 @@
+# https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted to native line endings on checkout.
+*.h text
+*.cpp text
+*.txt text
+*.glsl text
+
+# Declare files that will always have CRLF line endings on checkout.
+*.sln text eol=crlf
