@@ -9,85 +9,92 @@
 #ifndef Model_h
 #define Model_h
 
+const float shuffleSpeed = 2.5f;
+const int NUM_CUBE_VERTICES = 36;
+
 class Model
 {
 public:
-    glm::vec3 positions[20];
-    glm::vec3 positionsDefault[20];
-    glm::vec3 colors[20];
+    glm::vec3* positions;               //Recentered coordinates of the model array pointer
+    glm::vec3* positionsDefault;        //Original coordinates of the model array pointer
+    glm::vec3* colors;
     glm::vec3 center;
     float front;
     float numCubes;
     bool diffColors;
-    bool unshuffle;
+    bool unshuffle;                     //Determines if the model is currently moving towards the shuffled shape or the regular shape
     
-    Model()
+    Model() {
+        positions = new glm::vec3;
+        positionsDefault = new glm::vec3;
+        colors = new glm::vec3;
+        front = 0.0f;
+        numCubes = 0.0f;
+        diffColors = false;
+        unshuffle = false;
+    }
+
+    Model(glm::vec3* temp, float size)
     {
-        glm::vec3 temp[] = {
-            glm::vec3( -1.5f,  -1.5f, -5.0f),
-            glm::vec3( -0.5f,  -0.5f, -4.0f),
-            glm::vec3( 0.5f,  0.5f, -3.0f),
-            glm::vec3( 1.5f,  1.5f, -2.f),
-            glm::vec3( 1.5f,  0.5f, -1.f),
-            glm::vec3( 1.5f,  -0.5f, 0.f),
-            glm::vec3( 1.5f,  -1.5f, 1.f),
-            glm::vec3( 0.5f,  -0.5f, 2.f),
-            glm::vec3( -0.5f,  0.5f, 3.f),
-            glm::vec3( -1.5f,  1.5f, 4.f),
-        };
-        
-        
-        numCubes = sizeof(temp)/sizeof(temp[0]);
+        colors = new glm::vec3;
+        diffColors = false;
+        //Dynmically set array size for new model
+        numCubes = size;
+        positions = new glm::vec3[numCubes];
+        positionsDefault = new glm::vec3[numCubes];
+        //copy inputs into the objects parameters
         for (int i = 0; i<numCubes; i++)
         {
             positions[i] = temp[i];
-            
             positionsDefault[i] = temp[i];
         }
         
-        float maxX = 0.0f;
-        float maxY = 0.0f;
-        float maxZ = 0.0f;
-        float minX = 0.0f;
-        float minY = 0.0f;
-        float minZ = 0.0f;
+        //Calculate the physical center of the model based on the cubes on the outer most edge of each dimension
+        float maxX = positions[0].x;
+        float maxY = positions[0].y;
+        float maxZ = positions[0].z;
+        float minX = positions[0].x;
+        float minY = positions[0].y;
+        float minZ = positions[0].z;
+        //Find min and max cube in each dimension, store it
         for (int i = 0; i<numCubes; i++)
         {
-            float iX = positions[i].x;
-            float iY = positions[i].y;
-            float iZ = positions[i].z;
+            if (positions[i].x > maxX)
+                maxX = positions[i].x;
+            if (positions[i].y > maxY)
+                maxY = positions[i].y;
+            if (positions[i].z > maxZ)
+                maxZ = positions[i].z;
             
-            if (iX > maxX)
-                maxX = iX;
-            if (iY > maxY)
-                maxY = iY;
-            if (iZ > maxZ)
-                maxZ = iZ;
-            
-            if (iX < minX)
-                minX = iX;
-            if (iY < minY)
-                minY = iY;
-            if (iZ < minZ)
-                minZ = iZ;
+            if (positions[i].x < minX)
+                minX = positions[i].x;
+            if (positions[i].y < minY)
+                minY = positions[i].y;
+            if (positions[i].z < minZ)
+                minZ = positions[i].z;
         }
+        //Calculate average point (middle) from min/max
         float xHalfRange, yHalfRange, zHalfRange;
         xHalfRange = (maxX-minX)/2;
         yHalfRange = (maxY-minY)/2;
         zHalfRange = (maxZ-minZ)/2;
+        //Store center position as vector
         center = glm::vec3((minX + xHalfRange), (minY + yHalfRange), (minZ + zHalfRange));
-        front = zHalfRange;
+        //For shuffle
+        front = zHalfRange;         //sets to zHalfRange because positions are offset by (minZ + zHalfRange) 
+                                    //zHalfRange cancels out leaving front to be same coord as minZ
         
+        //Modify model coordinates to be relative to it's center point instead "normalize" the coordinates
         for (int i = 0; i<numCubes; i++)
         {
-            positions[i].x -= center.x;
-            positions[i].y -= center.y;
-            positions[i].z -= center.z;
+            positions[i] -= center;
+            positionsDefault[i] -= center;
         }
         
         unshuffle = false;
     }
     
+    //Shuffle function which "flattens" the model
     void shuffle(float deltaTime)
     {
         bool allFront = true;
@@ -99,15 +106,16 @@ public:
                 allFront = false;
                 if (positions[i].z > positionsDefault[i].z)
                 {
-                    positions[i].z -= 0.5 * 2.5 * deltaTime;
+                    positions[i].z -= shuffleSpeed * deltaTime;
                     allDefault = false;
                 }
             }
-            else{
+            else
+            {
                 if (positions[i].z < front)
                 {
                     allDefault = false;
-                    positions[i].z += 0.5 * 2.5 * deltaTime;
+                    positions[i].z += shuffleSpeed * deltaTime;
                     allFront = false;
                 }
             }
@@ -122,20 +130,26 @@ public:
         }
     }
     
-    void draw(glm::vec3 position, int worldLoc, int startIndex, float scale)
+    void draw(int worldLoc, int startIndex, float scale, glm::vec3 coordinates, glm::vec3 angles) //add angle
     {
         for(int i = 0; i<numCubes; i++)
         {
+            //set each transformation matrix based on input variables
             glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
-            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), (position + scale*(positions[i])));
-            
-            glm::mat4 worldMatrix =   translationMatrix * scalingMatrix;
-            
+            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), (coordinates + scale*(positions[i])));
+            glm::mat4 rotationMatrix = 
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) * 
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
+            );
+            //calculate final transformation
+            glm::mat4 worldMatrix = rotationMatrix * translationMatrix * scalingMatrix;
             glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
-            glDrawArrays(GL_TRIANGLES, startIndex, 36); // 3 vertices, starting at index 0
+            glDrawArrays(GL_TRIANGLES, startIndex, NUM_CUBE_VERTICES); // 3 vertices, starting at index 0
         }
         
     }
+
 };
 
 #endif /* Model_h */
