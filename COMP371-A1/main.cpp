@@ -488,6 +488,7 @@ void drawModels(int worldLoc)
         Calvin.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
         break;
     case 3:
+        Charles.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
         break;
     case 4:
         Dante.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
@@ -498,6 +499,7 @@ void drawModels(int worldLoc)
     default:
         Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
         Calvin.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Charles.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
         Dante.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
         Yeeho.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
         break;
@@ -586,6 +588,11 @@ int main(int argc, char*argv[])
     size = sizeof(calvinPts) / sizeof(glm::vec3);
     Calvin = Model(calvinPts, size);
     //Charles
+    glm::vec3 charlesPts[] = {
+        glm::vec3(0.0f,  0.0f, 0.0f)
+    };
+    size = sizeof(charlesPts) / sizeof(glm::vec3);
+    Charles = Model(charlesPts, size);
     //Dante
     glm::vec3 dantePts[] = {
         glm::vec3(0.0f,  0.0f, 0.0f),
