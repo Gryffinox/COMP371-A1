@@ -1,11 +1,8 @@
 //
-// COMP 371 Labs Framework
+// COMP 371 Assignment 1 team LastMinuteFormed
 //
-// Created by Nicolas Bergeron on 20/06/2019.
+// Built on in-class Lab Framework
 //
-// Inspired by the following tutorials:
-// - https://learnopengl.com/Getting-started/Hello-Window
-// - https://learnopengl.com/Getting-started/Hello-Triangle
 
 #include <iostream>
 
@@ -34,10 +31,6 @@ unsigned int renderMode = GL_FILL;
 
 float deltaTime = 0.0f;    // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
-
-double lastMousePosX = 0, lastMousePosY = 0;
-bool firstLeftMouse = true;
-bool firstRightMouse = true;
 
 void drawGround(int worldLoc);
 void drawCrosshairs(int worldLoc);
@@ -372,53 +365,15 @@ void getInput(GLFWwindow *window, float deltaTime)
     
     //right mouse -- pan camera in any direction
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {   
-
         //Current mouse pos
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
 
-        //reset lastMousePos when we first click since the mouse may have moved while not clicked
-        if (firstRightMouse) {
-            lastMousePosX = mousePosX;
-            lastMousePosY = mousePosY;
-            firstRightMouse = false;
-        }
-
-        //Find difference from last pos
-        double dx = mousePosX - lastMousePosX;
-        double dy = mousePosY - lastMousePosY;
-
-        //Set last to current
-        lastMousePosX = mousePosX;
-        lastMousePosY = mousePosY;
-
-        // Convert to spherical coordinates
-        const float cameraAngularSpeed = 45.0f;
-        camera.yaw -= dx * cameraAngularSpeed * deltaTime;
-        camera.pitch -= dy * cameraAngularSpeed * deltaTime;
-
-        // Clamp vertical angle to [-89, 89] degrees
-        camera.pitch = std::max(-89.0f, std::min(89.0f, camera.pitch));
-        //Reset horizontal angle values
-        if (camera.yaw > 360) {
-            camera.yaw -= 360;
-        }
-        else if (camera.yaw < -360) {
-            camera.yaw += 360;
-        }
-
-        float theta = glm::radians(camera.yaw);
-        float phi = glm::radians(camera.pitch);
-
-        //Set front facing vector based on yaw and pitch angles
-        camera.front = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-        camera.right = glm::cross(camera.front, glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::normalize(camera.right);
+        camera.panCamera(deltaTime, mousePosX, mousePosY);
     }
     //On release, reset variable for inital clicks
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-        firstRightMouse = true;
+        camera.firstRightMouse = true;
     }
     
     //left-mouse -- zoom in and out.
@@ -427,20 +382,11 @@ void getInput(GLFWwindow *window, float deltaTime)
         double mousePosY;
         glfwGetCursorPos(window, &mousePosY, &mousePosY);
 
-        //Reset on first click
-        if (firstLeftMouse) {
-            lastMousePosY = mousePosY;
-            firstLeftMouse = false;
-        }
-        double dy = mousePosY - lastMousePosY;
-        lastMousePosY = mousePosY;
-
-        //use difference in previous postion to change fov angle
-        camera.setZoom(camera.zoom + dy / 3);
+        camera.zoomCamera(mousePosY);
     }
     //On release, reset variable for inital clicks
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-        firstLeftMouse = true;
+        camera.firstLeftMouse = true;
     }  
 }
 

@@ -1,15 +1,16 @@
 ﻿  main.cpp
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\shader.h(56,40): warning C4101: 'e': unreferenced local variable
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(156,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(123,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(124,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(155,1): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(157,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(158,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(166,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(179,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(192,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(397,58): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(398,60): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(439,36): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(559,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(559,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(674,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(159,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(167,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(180,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(193,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(388,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(508,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(508,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(623,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   COMP371-A1.vcxproj -> C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe

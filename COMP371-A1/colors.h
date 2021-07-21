@@ -1,10 +1,4 @@
-//
-//  colors.h
-//  Assignment
-//
-//  Created by Amanda Simard on 2021-07-17.
-//  Copyright © 2021 Concordia. All rights reserved.
-//
+//  COMP 371 Assignment 1 team Last Minute Formed
 
 #ifndef colors_h
 #define colors_h
@@ -19,6 +13,7 @@ const glm::vec3 ORANGE = rgb(244,162,97);
 const glm::vec3 BLUE = rgb(0,0,255);
 const glm::vec3 RED = rgb(255,0,0);
 const glm::vec3 GREEN = rgb(0,255,0);
+const glm::vec3 FUSCHIA = rgb(255, 0, 128);
 
 glm::vec3 rgb(float r, float g, float b)
 {
