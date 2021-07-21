@@ -208,6 +208,13 @@ int createVertexArrayObject()
   return vertexArrayObject;
 }
 
+//Settings to reset whenever switching model (through controls 1-5 and Home)
+void sceneReset() {
+    scale = 1;
+    modelRotations = glm::vec3{ .0f, .0f, .0f };
+    modelTranslation = glm::vec3{ .0f, .0f, .0f };
+}
+
 /*=====================================================================
 Input controls
 =====================================================================*/
@@ -222,26 +229,39 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
     {
         modelToDisplay = 1;
+        sceneReset();
     }
 
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
         modelToDisplay = 2;
+        sceneReset();
     }
 
     if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
     {
         modelToDisplay = 3;
+        sceneReset();
     }
 
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
     {
         modelToDisplay = 4;
+        sceneReset();
     }
 
     if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
     {
         modelToDisplay = 5;
+        sceneReset();
+    }
+    //home key to reset everything
+    if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS) {
+        //reset camera position to position 1
+        //reset model variables to draw all of them
+        modelToDisplay = 0;     //default case anything not 1-5
+        camera.reset();
+        sceneReset();
     }
     //Move camera and rotate about object
     //=====================================================================
@@ -420,19 +440,7 @@ void getInput(GLFWwindow *window, float deltaTime)
     //On release, reset variable for inital clicks
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         firstLeftMouse = true;
-    }
-
-    //all mighty noahs ark save us from the deluge
-    if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS) {
-        //reset camera position to position 1
-        //reset model variables to draw all of them
-        modelToDisplay = 0;     //default case anything not 1-5
-        scale = 1;
-        camera.reset();
-        modelRotations = glm::vec3{ .0f, .0f, .0f };
-        modelTranslation = glm::vec3{ .0f, .0f, .0f };
-    }
-   
+    }  
 }
 
 //Draw everything calls other draw functions
@@ -482,19 +490,35 @@ void drawModels(int worldLoc)
 {
     switch (modelToDisplay) {
     case 1:
+        //parameters: world location as int, vertex array offset, s t r transformations
         Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
         Calvin.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 3:
         Charles.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 4:
         Dante.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 5:
         Yeeho.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     default:
         Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
@@ -552,16 +576,16 @@ int main(int argc, char*argv[])
     //TODO: get models from inputs
     //Amanda
     glm::vec3 amandaPts[] = {
-        glm::vec3(-1.5f,  -1.5f, -5.0f),
-        glm::vec3(-0.5f,  -0.5f, -4.0f),
-        glm::vec3(0.5f,  0.5f, -3.0f),
-        glm::vec3(1.5f,  1.5f, -2.f),
-        glm::vec3(1.5f,  0.5f, -1.f),
-        glm::vec3(1.5f,  -0.5f, 0.f),
-        glm::vec3(1.5f,  -1.5f, 1.f),
-        glm::vec3(0.5f,  -0.5f, 2.f),
-        glm::vec3(-0.5f,  0.5f, 3.f),
-        glm::vec3(-1.5f,  1.5f, 4.f),
+            glm::vec3(-1.f,  -1.f, -5.0f),
+            glm::vec3(-0.f,  -0.f, -4.0f),
+            glm::vec3(1.f,  1.f, -3.0f),
+            glm::vec3(2.f,  2.f, -2.f),
+            glm::vec3(2.f,  1.f, -1.f),
+            glm::vec3(2.f,  -0.f, 0.f),
+            glm::vec3(2.f,  -1.f, 1.f),
+            glm::vec3(1.f,  -0.f, 2.f),
+            glm::vec3(0.f,  1.f, 3.f),
+            glm::vec3(-1.f,  2.f, 4.f),
     };
     float size = sizeof(amandaPts) / sizeof(glm::vec3);
     Amanda = Model(amandaPts, size);
