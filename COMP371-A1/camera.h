@@ -163,7 +163,7 @@ public:
         glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
         glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(zoom),  // field of view in degrees
-                                                      1024.f / 768.f,      // aspect ratio
+                                                      1024.0f / 768.0f,      // aspect ratio
                                                       0.1f, 100.0f);       // near and far (near > 0)
         glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
     }

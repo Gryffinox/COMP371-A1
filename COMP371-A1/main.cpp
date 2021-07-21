@@ -131,6 +131,7 @@ int createVertexArrayObject()
         GREEN,
     };
     
+    //sizeof(cubeVertices)/sizeof(float)/3 = 36
     int neededSize = 36 * 2 + 8 + 12;
     //glm::vec3 vertexArray[neededSize];
     glm::vec3 vertexArray[92];
@@ -306,15 +307,15 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         modelTranslation.x -= deltaTime;
     }
-    //u -- move model up
+    //u -- move model up (forward)
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
-        modelTranslation.y += deltaTime;
+        modelTranslation.z += deltaTime;
     }  
-    //k -- move model down
+    //k -- move model down (backward)
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
-        modelTranslation.y -= deltaTime;
+        modelTranslation.z -= deltaTime;
     }
     //y -- rotate model
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
@@ -492,40 +493,45 @@ void drawModels(int worldLoc)
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations
         Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        /*Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
         Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
         Calvin.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.xAxis);
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.zAxis);
         break;
     case 3:
         Charles.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.xAxis);
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.zAxis);
         break;
     case 4:
         Dante.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.xAxis);
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.zAxis);
         break;
     case 5:
         Yeeho.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.xAxis);
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.zAxis);
         break;
     default:
         Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
+        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
         Calvin.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Calvin.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
         Charles.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+        Charles.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
         Dante.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+        Dante.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
         Yeeho.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
         break;
     }
 }
