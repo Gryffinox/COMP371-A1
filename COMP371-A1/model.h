@@ -41,11 +41,9 @@ public:
     Model() {
         positions = new glm::vec3;
         positionsDefault = new glm::vec3;
-        colors = new glm::vec3;
         center = glm::vec3{ 0.0f, 0.0f, 0.0f };
         front = 0.0f;
         numCubes = 0;
-        diffColors = false;
         unshuffle = false;
 
         wallX = new glm::vec3;
@@ -60,8 +58,6 @@ public:
     Model(glm::vec3* originalModel, float size)
     {
         //initialize all variables
-        colors = new glm::vec3;
-        diffColors = false;
         unshuffle = false;
         //Dynmically set array size for new model
         numCubes = (int)size;
