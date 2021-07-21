@@ -565,7 +565,15 @@ int main(int argc, char*argv[])
     Calvin = Model(calvinPts, size);
     //Charles
     glm::vec3 charlesPts[] = {
-        glm::vec3(0.0f,  0.0f, 0.0f)
+        glm::vec3(3.0f,0.0f,0.0f),
+        glm::vec3(3.0f,0.0f,1.0f),
+        glm::vec3(2.0f,0.0f,2.0f),
+        glm::vec3(1.0f,0.0f,3.0f),
+        glm::vec3(0.0f,0.0f,3.0f),
+        glm::vec3(0.0f,1.0f,3.0f),
+        glm::vec3(0.0f,2.0f,2.0f),
+        glm::vec3(0.0f,3.0f,1.0f),
+        glm::vec3(0.0f,3.0f,0.0f)
     };
     size = sizeof(charlesPts) / sizeof(glm::vec3);
     Charles = Model(charlesPts, size);
