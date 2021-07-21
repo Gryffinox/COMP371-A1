@@ -11,16 +11,20 @@
 
 const float shuffleSpeed = 2.5f;
 const int NUM_CUBE_VERTICES = 36;
+const float wallOffset = 10.f;
+const float wallDepthMultiplier = 0.2f;
 
 class Model
 {
 public:
     glm::vec3* positions;               //Recentered coordinates of the model array pointer
+    glm::vec3* wallPositions;               //Recentered coordinates of the model wall array pointer
     glm::vec3* positionsDefault;        //Original coordinates of the model array pointer
     glm::vec3* colors;
     glm::vec3 center;
     float front;
     int numCubes;
+    int numWallCubes;
     bool diffColors;
     bool unshuffle;                     //Determines if the model is currently moving towards the shuffled shape or the regular shape
     
@@ -30,23 +34,27 @@ public:
         colors = new glm::vec3;
         front = 0.0f;
         numCubes = 0;
+        numWallCubes = 0;
         diffColors = false;
         unshuffle = false;
     }
-
-    Model(glm::vec3* temp, float size)
+    
+    Model(glm::vec3* coords, float sizeCoords, glm::vec2* wallCoords, float sizeWallCoords)
     {
         colors = new glm::vec3;
         diffColors = false;
         //Dynmically set array size for new model
-        numCubes = (int)size;
+        numCubes = (int)sizeCoords;
         positions = new glm::vec3[numCubes];
         positionsDefault = new glm::vec3[numCubes];
+        
+        numWallCubes = (int)sizeWallCoords;
+        wallPositions = new glm::vec3[numWallCubes];
         //copy inputs into the objects parameters
         for (int i = 0; i<numCubes; i++)
         {
-            positions[i] = temp[i];
-            positionsDefault[i] = temp[i];
+            positions[i] = coords[i];
+            positionsDefault[i] = coords[i];
         }
         
         //Calculate the physical center of the model based on the cubes on the outer most edge of each dimension
@@ -89,6 +97,21 @@ public:
         {
             positions[i] -= center;
             positionsDefault[i] -= center;
+        }
+        
+        //copy wall inputs into objects parameters
+        //set z coordinate to chosen offset (from front of object)
+        for (int i = 0; i<numWallCubes; i++)
+        {
+            wallPositions[i] = glm::vec3(wallCoords[i], wallOffset+front);
+        }
+        
+        //Modify wall coordinates to be relative to the model's center point instead "normalize" the coordinates
+        //z value should not change
+        for (int i = 0; i<numWallCubes; i++)
+        {
+            wallPositions[i].x -= center.x;
+            wallPositions[i].y -= center.y;
         }
 
         //Flag for shuffle later
@@ -150,6 +173,29 @@ public:
             glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
             glm::mat4 rotationMatrix = 
                 glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) * 
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
+            );
+            //calculate final transformation
+            //TODO: needs to apply rotation relative to center of model
+            //Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
+            glm::mat4 worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
+            glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+            glDrawArrays(GL_TRIANGLES, startIndex, NUM_CUBE_VERTICES); // 3 vertices, starting at index 0
+        }
+        
+        //draw wall
+        //all translations and rotations applied to wall
+        for(int i = 0; i<numWallCubes; i++)
+        {
+            //set each transformation matrix based on input variables
+            //wall z-scale is fractional to make the wall thin
+            glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale * wallDepthMultiplier));
+            //glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
+            glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), scale * (wallPositions[i]));
+            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
+            glm::mat4 rotationMatrix =
+                glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) *
                 glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
                 glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
             );

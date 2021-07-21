@@ -552,19 +552,53 @@ int main(int argc, char*argv[])
     //TODO: get models from inputs
     //Amanda
     glm::vec3 amandaPts[] = {
-        glm::vec3(-1.5f,  -1.5f, -5.0f),
-        glm::vec3(-0.5f,  -0.5f, -4.0f),
-        glm::vec3(0.5f,  0.5f, -3.0f),
-        glm::vec3(1.5f,  1.5f, -2.f),
-        glm::vec3(1.5f,  0.5f, -1.f),
-        glm::vec3(1.5f,  -0.5f, 0.f),
-        glm::vec3(1.5f,  -1.5f, 1.f),
-        glm::vec3(0.5f,  -0.5f, 2.f),
-        glm::vec3(-0.5f,  0.5f, 3.f),
-        glm::vec3(-1.5f,  1.5f, 4.f),
+        glm::vec3( -1.f,  -1.f, -5.0f),
+        glm::vec3( -0.f,  -0.f, -4.0f),
+        glm::vec3( 1.f,  1.f, -3.0f),
+        glm::vec3( 2.f,  2.f, -2.f),
+        glm::vec3( 2.f,  1.f, -1.f),
+        glm::vec3( 2.f,  -0.f, 0.f),
+        glm::vec3( 2.f,  -1.f, 1.f),
+        glm::vec3( 1.f,  -0.f, 2.f),
+        glm::vec3( 0.f,  1.f, 3.f),
+        glm::vec3( -1.f,  2.f, 4.f),
     };
-    float size = sizeof(amandaPts) / sizeof(glm::vec3);
-    Amanda = Model(amandaPts, size);
+    glm::vec2 amandaWallPts[] = {
+        //left side
+        glm::vec2( -2.f,  -2.f),
+        glm::vec2( -2.f,  -1.f),
+        glm::vec2( -2.f,  0.f),
+        glm::vec2( -2.f,  1.f),
+        glm::vec2( -2.f,  2.f),
+        glm::vec2( -2.f,  3.f),
+        glm::vec2( -1.f,  1.f),
+        glm::vec2( -1.f,  0.f),
+        //right side
+        glm::vec2( 3.f,  -2.f),
+        glm::vec2( 3.f,  -1.f),
+        glm::vec2( 3.f,  0.f),
+        glm::vec2( 3.f,  1.f),
+        glm::vec2( 3.f,  2.f),
+        glm::vec2( 3.f,  3.f),
+        //upper side
+        glm::vec2( -1.f,  3.f),
+        glm::vec2( 0.f,  3.f),
+        glm::vec2( 1.f,  3.f),
+        glm::vec2( 2.f,  3.f),
+        glm::vec2( 0.f,  2.f),
+        glm::vec2( 1.f,  2.f),
+
+        //lower side
+        glm::vec2( -1.f,  -2.f),
+        glm::vec2( 0.f,  -2.f),
+        glm::vec2( 1.f,  -2.f),
+        glm::vec2( 2.f,  -2.f),
+        glm::vec2( 0.f,  -1.f),
+        glm::vec2( 1.f,  -1.f),
+    };
+    float shapeSize = sizeof(amandaPts) / sizeof(glm::vec3);
+    float wallSize = sizeof(amandaWallPts) / sizeof(glm::vec2);
+    Amanda = Model(amandaPts, shapeSize, amandaWallPts, wallSize);
     //Calvin
     glm::vec3 calvinPts[] = {
         glm::vec3(0.0f, 0.0f, 3.0f),
@@ -585,14 +619,24 @@ int main(int argc, char*argv[])
         glm::vec3(-1.0f, -1.0f, 0.0f),
         glm::vec3(-1.0f, 0.0f, -1.0f)
     };
-    size = sizeof(calvinPts) / sizeof(glm::vec3);
-    Calvin = Model(calvinPts, size);
+    glm::vec2 calvinWallPts[] =
+    {
+        glm::vec2(0.f,0.f)
+    };
+    shapeSize = sizeof(calvinPts) / sizeof(glm::vec3);
+    wallSize = sizeof(calvinWallPts) / sizeof(glm::vec2);
+    Calvin = Model(calvinPts, shapeSize, calvinWallPts, wallSize);
     //Charles
     glm::vec3 charlesPts[] = {
         glm::vec3(0.0f,  0.0f, 0.0f)
     };
-    size = sizeof(charlesPts) / sizeof(glm::vec3);
-    Charles = Model(charlesPts, size);
+    glm::vec2 charlesWallPts[] =
+    {
+        glm::vec2(0.f,0.f)
+    };
+    shapeSize = sizeof(charlesPts) / sizeof(glm::vec3);
+    wallSize = sizeof(charlesWallPts) / sizeof(glm::vec2);
+    Charles = Model(charlesPts, shapeSize, charlesWallPts, wallSize);
     //Dante
     glm::vec3 dantePts[] = {
         glm::vec3(0.0f,  0.0f, 0.0f),
@@ -605,8 +649,13 @@ int main(int argc, char*argv[])
         glm::vec3(1.0f,  -1.0f, -1.0f),
         glm::vec3(2.0f,  -1.0f, 0.0f)
     };
-    size = sizeof(dantePts) / sizeof(glm::vec3);
-    Dante = Model(dantePts, size);
+    glm::vec2 danteWallPts[] =
+    {
+        glm::vec2(0.f,0.f)
+    };
+    shapeSize = sizeof(dantePts) / sizeof(glm::vec3);
+    wallSize = sizeof(danteWallPts) / sizeof(glm::vec2);
+    Dante = Model(dantePts, shapeSize, danteWallPts, wallSize);
     //Yeeho
     glm::vec3 yeehoPts[] = {
         glm::vec3(0.0f, 5.0f, 0.0f),
@@ -621,8 +670,13 @@ int main(int argc, char*argv[])
         glm::vec3(2.0f, 7.0f, -2.0f),
         glm::vec3(0.0f, 7.0f, -2.0f)
     };
-    size = sizeof(yeehoPts) / sizeof(glm::vec3);
-    Yeeho = Model(yeehoPts, size);
+    glm::vec2 yeehoWallPts[] =
+    {
+        glm::vec2(0.f,0.f)
+    };
+    shapeSize = sizeof(yeehoPts) / sizeof(glm::vec3);
+    wallSize = sizeof(yeehoWallPts) / sizeof(glm::vec2);
+    Yeeho = Model(yeehoPts, shapeSize, yeehoWallPts, wallSize);
     
     //hide mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
