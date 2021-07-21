@@ -7,6 +7,7 @@
 #include "shader.h"
 
 const float panConstant = 5.f;
+const float rotationSpeedMult = 25.f;
 
 class Camera
 {
@@ -20,15 +21,17 @@ public:
     glm::vec3 right;
     glm::vec3 worldUp;
     // euler Angles
-    float yaw;
-    float pitch;
+    float yaw;      //left right
+    float pitch;    //up down
     
+    //movement and zoom controls
     float speed;
     float zoom;
     
     GLuint viewMatrixLocation;
     GLuint projectionMatrixLocation;
 
+    //camera pan
     bool firstLeftMouse;
     bool firstRightMouse;
     double lastMousePosX;
@@ -77,22 +80,23 @@ public:
         position -= front * speed * deltaTime;
     }
     
-    /*void turnRX(float deltaTime)
-    {
-        
+    void rotateAboutCenter(float deltaTime) {
+        //calculate angular positions relative to object to get polar coordinate
+        float angle = glm::degrees(atan2(position.z, position.x));
+        //change angle by deltaTime to move camera
+        angle += (deltaTime * rotationSpeedMult);
+        //distance from center
+        float distance = sqrt(pow(position.z, 2) + pow(position.x, 2));
+        //calculate new position
+        position = glm::vec3(distance * cos(glm::radians(angle)), position.y, distance * sin(glm::radians(angle)));
+        //point camera at object
+        yaw = -angle + 180;
+        //update vectors
+        float radYaw = glm::radians(yaw);
+        float radPitch = glm::radians(pitch);
+        front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
+        right = glm::normalize(glm::cross(front, worldUp));
     }
-    void turnRnX(float deltaTime)
-    {
-       
-    }
-    void turnRY(float deltaTime)
-    {
-        
-    }
-    void turnRnY(float deltaTime)
-    {
-        
-    }*/
     
     void panCamera(float deltaTime, double mousePosX, double mousePosY) {
 
@@ -154,6 +158,7 @@ public:
         }
     }
   
+    //Update camera view based on settings
     void updateCam()
     {
         glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
@@ -169,6 +174,7 @@ public:
         this->position = newPosition;
     }
 
+    //Resets the camera to the default position it starts in with default zoom
     void reset() {
         position = glm::vec3(0.0f, 0.0f, -10.0f);
         front = glm::vec3(0.0f, 0.0f, 1.0f);

@@ -25,7 +25,7 @@
 const float SCR_WIDTH = 1024.0f;
 const float SCR_HEIGHT = 768.0f;
 
-const float speedMultiplier = 10.0;
+const float modelRotationSpeedMult = 10.0;
 
 unsigned int renderMode = GL_FILL;
 
@@ -39,9 +39,10 @@ void drawModels(int worldLoc);
 float scale = 1.0f;
 glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
 glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
-
+glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
 int modelToDisplay = 0;
+int modelMoveSpeedMult = 2;
 
 Model Amanda;
 Model Calvin;
@@ -281,11 +282,11 @@ void getInput(GLFWwindow *window, float deltaTime)
     }
     //press Q -- rotate about the object
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-
+        camera.rotateAboutCenter(deltaTime);
     }
     //press E -- rotate about the object
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-
+        camera.rotateAboutCenter(-deltaTime);
     }
     
     //Move Model and rotate model
@@ -293,30 +294,30 @@ void getInput(GLFWwindow *window, float deltaTime)
     //u -- move model left
     if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
     {
-        modelTranslation.x += deltaTime;
+        modelTranslation.x += (deltaTime * modelMoveSpeedMult);
     }
     //l -- move model right
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
     {
-        modelTranslation.x -= deltaTime;
+        modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
     }
     //u -- move model up (forward)
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
-        modelTranslation.z += deltaTime;
+        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
     }  
     //k -- move model down (backward)
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
-        modelTranslation.z -= deltaTime;
+        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
     }
     //y -- rotate model
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
-        modelRotations.y += deltaTime * speedMultiplier;
+        modelRotations.y += deltaTime * modelRotationSpeedMult;
     }
     //i -- rotate model
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-        modelRotations.y -= deltaTime * speedMultiplier;
+        modelRotations.y -= deltaTime * modelRotationSpeedMult;
     }
     //TFPL for selecting render mode
     //=====================================================================
@@ -359,6 +360,7 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         Amanda.shuffle(deltaTime);
         Calvin.shuffle(deltaTime);
+        Charles.shuffle(deltaTime);
         Dante.shuffle(deltaTime);
         Yeeho.shuffle(deltaTime);
     }
@@ -368,10 +370,9 @@ void getInput(GLFWwindow *window, float deltaTime)
         //Current mouse pos
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
-
         camera.panCamera(deltaTime, mousePosX, mousePosY);
     }
-    //On release, reset variable for inital clicks
+    //On release, reset right mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
         camera.firstRightMouse = true;
     }
@@ -381,10 +382,9 @@ void getInput(GLFWwindow *window, float deltaTime)
         //get y position only, we don't care about x for zooming in
         double mousePosY;
         glfwGetCursorPos(window, &mousePosY, &mousePosY);
-
         camera.zoomCamera(mousePosY);
     }
-    //On release, reset variable for inital clicks
+    //On release, reset left mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         camera.firstLeftMouse = true;
     }  
