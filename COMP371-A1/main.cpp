@@ -41,6 +41,25 @@ glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
 glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
+
+
+//vertex start index and count variables
+//start indices
+int crosshairsIndex;
+int groundIndex;
+int orangeCube;
+int darkorangeCube;
+int yellowCube;
+int tealCube;
+int lightgreenCube;
+
+//counts
+int gvCount;
+int chvCount;
+int cubevCount;
+
+
+//model variables
 int modelToDisplay = 0;
 int modelMoveSpeedMult = 2;
 
@@ -51,6 +70,12 @@ Model Dante;
 Model Yeeho;
 Camera camera;
 Shader shader;
+
+int amandaColor;
+int calvinColor;
+int yeehoColor;
+int danteColor;
+int charlesColor;
 
 int createVertexArrayObject()
 {
@@ -125,47 +150,127 @@ int createVertexArrayObject()
         GREEN,
     };
     
-    //sizeof(cubeVertices)/sizeof(float)/3 = 36
-    int neededSize = 36 * 2 + 8 + 12;
-    //glm::vec3 vertexArray[neededSize];
-    glm::vec3 vertexArray[92];
-    int j = 0;
+    // array size is cubes: 5 * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
+    glm::vec3 vertexArray[380];
+    
+    groundIndex = 0;
+    gvCount = 4;
+    int istop = gvCount * 2;
+    int ioffset = 0;
+    int j=0;
+    for (int i = 0; i < istop; i++)
+    {
+        vertexArray[i + groundIndex ] = groundArray[j];
+        j++;
+    }
+    
+    crosshairsIndex = 4;
+    chvCount = 6;
+    istop = chvCount * 2;
+    ioffset = crosshairsIndex * 2;
+    j=0;
+    for (int i = 0; i < istop; i++)
+    {
+        vertexArray[i + ioffset] = crosshairArray[j];
+        j++;
+    }
+    
+    cubevCount = 36;
+    orangeCube = 10;
+    istop = cubevCount * 2;
+    ioffset = orangeCube * 2;
+
     bool addV = false;
-    for(int i = 0; i < 72; i++)
+    j = 0;
+    for(int i = 0; i < istop; i++)
     {
         addV = !addV;
         
         if(addV)
         {
-            vertexArray[i] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+            vertexArray[i + ioffset ] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
             j = j+3;
             
         } else {
             //set color white
-            vertexArray[i] = ORANGE;
+            vertexArray[i + ioffset] = ORANGE;
         }
     }
     
+    yellowCube = 10 + 36;
+    ioffset = yellowCube * 2;
+    addV = false;
     j=0;
-    for (int i = 72; i < 80; i++)
+    for(int i = 0; i < istop; i++)
     {
-        vertexArray[i] = groundArray[j];
-        j++;
+        addV = !addV;
+        
+        if(addV)
+        {
+            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+            j = j+3;
+            
+        } else {
+            //set color white
+            vertexArray[i + ioffset] = YELLOW;
+        }
     }
     
+    lightgreenCube = 10 + 36 * 2;
+    ioffset = lightgreenCube * 2;
+    addV = false;
     j=0;
-    for (int i = 80; i < neededSize; i++)
+    for(int i = 0; i < istop; i++)
     {
-        vertexArray[i] = crosshairArray[j];
-        j++;
+        addV = !addV;
+        
+        if(addV)
+        {
+            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+            j = j+3;
+            
+        } else {
+            //set color white
+            vertexArray[i + ioffset] = LIGHT_GREEN;
+        }
     }
-   
+    tealCube = 10 + 36 * 3;
+    ioffset = tealCube * 2;
+    addV = false;
+    j=0;
+    for(int i = 0; i < istop; i++)
+    {
+        addV = !addV;
+        
+        if(addV)
+        {
+            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+            j = j+3;
+            
+        } else {
+            //set color white
+            vertexArray[i + ioffset] = TEAL;
+        }
+    }
     
-    /*glm::vec3 vertexArrays = {
-        vertexArray,
-        groundArray,
-    };*/
-    
+    darkorangeCube = 10 + 36 * 4;
+    ioffset = darkorangeCube * 2;
+    addV = false;
+    j=0;
+    for(int i = 0; i < istop; i++)
+    {
+        addV = !addV;
+        
+        if(addV)
+        {
+            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+            j = j+3;
+            
+        } else {
+            //set color white
+            vertexArray[i + ioffset] = DARK_ORANGE;
+        }
+    }
     
     // Create a vertex array
     GLuint vertexArrayObject;
@@ -199,6 +304,7 @@ int createVertexArrayObject()
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
+    
 
   return vertexArrayObject;
 }
@@ -416,7 +522,7 @@ void drawGround(int worldLoc)
             glm::mat4 worldMatrix =  translationMatrix;
             glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
             //TODO: replace magic numbers with constants
-            glDrawArrays(GL_LINE_LOOP, 36, 4);
+            glDrawArrays(GL_LINE_LOOP, groundIndex, 4);
         }
     }
 }
@@ -429,7 +535,7 @@ void drawCrosshairs(int worldLoc)
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
     glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
     //TODO: replace magic numbers with constants
-    glDrawArrays(GL_LINES, 40, 6);
+    glDrawArrays(GL_LINES, crosshairsIndex, 6);
 }
 
 //Draws the models
@@ -438,46 +544,47 @@ void drawModels(int worldLoc)
     switch (modelToDisplay) {
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations
-        Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        /*Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
-        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
+        /*Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
+        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
-        Calvin.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        /*Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.xAxis);
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Calvin.zAxis);
+        Calvin.draw(worldLoc, calvinColor, scale, modelTranslation, modelRotations);
+        /*Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
         break;
     case 3:
-        Charles.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        /*Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.xAxis);
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.yAxis);*/
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Charles.zAxis);
+        Charles.draw(worldLoc, charlesColor, scale, modelTranslation, modelRotations);
+        /*Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
         break;
     case 4:
-        Dante.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        /*Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.xAxis);
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.yAxis);*/
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Dante.zAxis);
+        Dante.draw(worldLoc, danteColor, scale, modelTranslation, modelRotations);
+        /*Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
         break;
     case 5:
-        Yeeho.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        /*Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.xAxis);
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Yeeho.zAxis);
+        Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation, modelRotations);
+        /*Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
         break;
     default:
-        Amanda.draw(worldLoc, 0, scale, modelTranslation, modelRotations);
-        Amanda.drawWall(worldLoc, 0, scale, modelTranslation, modelRotations, Amanda.zAxis);
-        Calvin.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
-        Calvin.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
-        Charles.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
-        Charles.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
-        Dante.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
-        Dante.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
-        Yeeho.draw(worldLoc, 0, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
-        Yeeho.drawWall(worldLoc, 0, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
+        Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
+        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        Calvin.draw(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
+        Charles.draw(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
+        Dante.draw(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
+        Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
+
         break;
     }
 }
@@ -646,10 +753,18 @@ int main(int argc, char*argv[])
     
     // Define and upload geometry to the GPU here ...
     int vao = createVertexArrayObject();
-
+    
+    //set model colors
+    amandaColor = tealCube;
+    calvinColor = orangeCube;
+    yeehoColor = darkorangeCube;
+    danteColor = lightgreenCube;
+    charlesColor = yellowCube;
+    
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
     {
+        
         camera.updateCam();
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
