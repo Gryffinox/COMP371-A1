@@ -1,10 +1,4 @@
-//
-//  camera.h
-//  Assignment
-//
-//  Created by Amanda Simard on 2021-07-14.
-//  Copyright © 2021 Concordia. All rights reserved.
-//
+//  COMP 371 Assignment 1 team Last Minute Formed
 
 #ifndef camera_h
 #define camera_h
@@ -13,6 +7,7 @@
 #include "shader.h"
 
 const float panConstant = 5.f;
+const float rotationSpeedMult = 25.f;
 
 class Camera
 {
@@ -26,14 +21,21 @@ public:
     glm::vec3 right;
     glm::vec3 worldUp;
     // euler Angles
-    float yaw;
-    float pitch;
+    float yaw;      //left right
+    float pitch;    //up down
     
+    //movement and zoom controls
     float speed;
     float zoom;
     
     GLuint viewMatrixLocation;
     GLuint projectionMatrixLocation;
+
+    //camera pan
+    bool firstLeftMouse;
+    bool firstRightMouse;
+    double lastMousePosX;
+    double lastMousePosY;
     
     //Default constructor
     Camera(){}
@@ -52,7 +54,10 @@ public:
         zoom = 75.0f;
         viewMatrixLocation = shader->getUniform("viewMatrix");
         projectionMatrixLocation = shader->getUniform("projectionMatrix");
-        
+        firstLeftMouse = true;
+        firstRightMouse = true;
+        lastMousePosX = 0;
+        lastMousePosY = 0;
     }
     
     void moveLeft(float deltaTime)
@@ -75,95 +80,91 @@ public:
         position -= front * speed * deltaTime;
     }
     
-    /*void turnRX(float deltaTime)
-    {
-        
-    }
-    void turnRnX(float deltaTime)
-    {
-       
-    }
-    void turnRY(float deltaTime)
-    {
-        
-    }
-    void turnRnY(float deltaTime)
-    {
-        
-    }*/
-    
-    void panLeft(float deltaTime)
-    {
-        yaw += panConstant * speed * deltaTime;
-        // calculate the new Front vector
-        glm::vec3 f;
-        f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        f.y = sin(glm::radians(pitch));
-        f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front = glm::normalize(f);
-        // also re-calculate the Right and Up vector
-        right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up    = glm::normalize(glm::cross(right, front));
+    void rotateAboutCenter(float deltaTime) {
+        //calculate angular positions relative to object to get polar coordinate
+        float angle = glm::degrees(atan2(position.z, position.x));
+        //change angle by deltaTime to move camera
+        angle += (deltaTime * rotationSpeedMult);
+        //distance from center
+        float distance = sqrt(pow(position.z, 2) + pow(position.x, 2));
+        //calculate new position
+        position = glm::vec3(distance * cos(glm::radians(angle)), position.y, distance * sin(glm::radians(angle)));
+        //point camera at object
+        yaw = -angle + 180;
+        //update vectors
+        float radYaw = glm::radians(yaw);
+        float radPitch = glm::radians(pitch);
+        front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
+        right = glm::normalize(glm::cross(front, worldUp));
     }
     
-    void panRight(float deltaTime)
-    {
-        yaw += panConstant * speed * deltaTime;
-        // calculate the new Front vector
-        glm::vec3 f;
-        f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        f.y = sin(glm::radians(pitch));
-        f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front = glm::normalize(f);
-        // also re-calculate the Right and Up vector
-        right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up    = glm::normalize(glm::cross(right, front));
-    }
-    
-    void tiltUp(float deltaTime)
-    {
-        pitch += panConstant * speed * deltaTime;
-        // calculate the new Front vector
-        glm::vec3 f;
-        f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        f.y = sin(glm::radians(pitch));
-        f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front = glm::normalize(f);
-        // also re-calculate the Right and Up vector
-        right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up    = glm::normalize(glm::cross(right, front));
-    }
-    void tiltDown(float deltaTime)
-    {
-        pitch -= panConstant * speed * deltaTime;
-        // calculate the new Front vector
-        glm::vec3 f;
-        f.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        f.y = sin(glm::radians(pitch));
-        f.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front = glm::normalize(f);
-        // also re-calculate the Right and Up vector
-        right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up    = glm::normalize(glm::cross(right, front));
+    void panCamera(float deltaTime, double mousePosX, double mousePosY) {
+
+        //reset lastMousePos when we first click since the mouse may have moved while not clicked
+        if (firstRightMouse) {
+            lastMousePosX = mousePosX;
+            lastMousePosY = mousePosY;
+            firstRightMouse = false;
+        }
+
+        //Find difference from last pos
+        double dx = mousePosX - lastMousePosX;
+        double dy = mousePosY - lastMousePosY;
+
+        //Set last to current
+        lastMousePosX = mousePosX;
+        lastMousePosY = mousePosY;
+
+        // Convert to spherical coordinates
+        const float cameraAngularSpeed = 45.0f;
+        yaw -= dx * cameraAngularSpeed * deltaTime;
+        pitch -= dy * cameraAngularSpeed * deltaTime;
+
+        // Clamp vertical angle to [-89, 89] degrees
+        pitch = std::max(-89.0f, std::min(89.0f, pitch));
+        //Reset horizontal angle values
+        if (yaw > 360) {
+            yaw -= 360;
+        }
+        else if (yaw < -360) {
+            yaw += 360;
+        }
+
+        float radYaw = glm::radians(yaw);
+        float radPitch = glm::radians(pitch);
+
+        //Set front facing vector based on yaw and pitch angles
+        front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
+        right = glm::normalize(glm::cross(front, worldUp));
     }
 
-    //Set FOV angle. clamp to 1 to 150. FOV angle affects zoom
-    void setZoom(float newZoom) {
-        if (newZoom < 1) {
-            newZoom = 1;
+    void zoomCamera(float mousePosY) {
+        //Reset on first click
+        if (firstLeftMouse) {
+            lastMousePosY = mousePosY;
+            firstLeftMouse = false;
         }
-        if (newZoom > 150) {
-            newZoom = 150;
+        double dy = mousePosY - lastMousePosY;
+        lastMousePosY = mousePosY;
+
+        //use difference in previous postion to change fov angle
+        //clamp to 1 to 150. FOV angle affects zoom
+        zoom += (dy / 3);
+        if (zoom < 1) {
+            zoom = 1;
         }
-        this->zoom = newZoom;
+        if (zoom > 150) {
+            zoom = 150;
+        }
     }
   
+    //Update camera view based on settings
     void updateCam()
     {
         glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
         glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(zoom),  // field of view in degrees
-                                                      1024.f / 768.f,      // aspect ratio
+                                                      1024.0f / 768.0f,      // aspect ratio
                                                       0.1f, 100.0f);       // near and far (near > 0)
         glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
     }
@@ -173,6 +174,7 @@ public:
         this->position = newPosition;
     }
 
+    //Resets the camera to the default position it starts in with default zoom
     void reset() {
         position = glm::vec3(0.0f, 0.0f, -10.0f);
         front = glm::vec3(0.0f, 0.0f, 1.0f);

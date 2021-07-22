@@ -1,11 +1,8 @@
 //
-// COMP 371 Labs Framework
+// COMP 371 Assignment 1 team LastMinuteFormed
 //
-// Created by Nicolas Bergeron on 20/06/2019.
+// Built on in-class Lab Framework
 //
-// Inspired by the following tutorials:
-// - https://learnopengl.com/Getting-started/Hello-Window
-// - https://learnopengl.com/Getting-started/Hello-Triangle
 
 #include <iostream>
 
@@ -28,16 +25,12 @@
 const float SCR_WIDTH = 1024.0f;
 const float SCR_HEIGHT = 768.0f;
 
-const float speedMultiplier = 10.0;
+const float modelRotationSpeedMult = 10.0;
 
 unsigned int renderMode = GL_FILL;
 
 float deltaTime = 0.0f;    // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
-
-double lastMousePosX = 0, lastMousePosY = 0;
-bool firstLeftMouse = true;
-bool firstRightMouse = true;
 
 void drawGround(int worldLoc);
 void drawCrosshairs(int worldLoc);
@@ -46,7 +39,7 @@ void drawModels(int worldLoc);
 float scale = 1.0f;
 glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
 glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
-
+glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
 
 
@@ -68,6 +61,7 @@ int cubevCount;
 
 //model variables
 int modelToDisplay = 0;
+int modelMoveSpeedMult = 2;
 
 Model Amanda;
 Model Calvin;
@@ -185,6 +179,7 @@ int createVertexArrayObject()
     orangeCube = 10;
     istop = cubevCount * 2;
     ioffset = orangeCube * 2;
+
     bool addV = false;
     j = 0;
     for(int i = 0; i < istop; i++)
@@ -393,11 +388,11 @@ void getInput(GLFWwindow *window, float deltaTime)
     }
     //press Q -- rotate about the object
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-
+        camera.rotateAboutCenter(deltaTime);
     }
     //press E -- rotate about the object
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-
+        camera.rotateAboutCenter(-deltaTime);
     }
     
     //Move Model and rotate model
@@ -405,30 +400,30 @@ void getInput(GLFWwindow *window, float deltaTime)
     //u -- move model left
     if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
     {
-        modelTranslation.x += deltaTime;
+        modelTranslation.x += (deltaTime * modelMoveSpeedMult);
     }
     //l -- move model right
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
     {
-        modelTranslation.x -= deltaTime;
+        modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
     }
-    //u -- move model up
+    //u -- move model up (forward)
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
-        modelTranslation.y += deltaTime;
+        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
     }  
-    //k -- move model down
+    //k -- move model down (backward)
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
-        modelTranslation.y -= deltaTime;
+        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
     }
     //y -- rotate model
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
-        modelRotations.y += deltaTime * speedMultiplier;
+        modelRotations.y += deltaTime * modelRotationSpeedMult;
     }
     //i -- rotate model
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-        modelRotations.y -= deltaTime * speedMultiplier;
+        modelRotations.y -= deltaTime * modelRotationSpeedMult;
     }
     //TFPL for selecting render mode
     //=====================================================================
@@ -471,59 +466,21 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         Amanda.shuffle(deltaTime);
         Calvin.shuffle(deltaTime);
+        Charles.shuffle(deltaTime);
         Dante.shuffle(deltaTime);
         Yeeho.shuffle(deltaTime);
     }
     
     //right mouse -- pan camera in any direction
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {   
-
         //Current mouse pos
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
-
-        //reset lastMousePos when we first click since the mouse may have moved while not clicked
-        if (firstRightMouse) {
-            lastMousePosX = mousePosX;
-            lastMousePosY = mousePosY;
-            firstRightMouse = false;
-        }
-
-        //Find difference from last pos
-        double dx = mousePosX - lastMousePosX;
-        double dy = mousePosY - lastMousePosY;
-
-        //Set last to current
-        lastMousePosX = mousePosX;
-        lastMousePosY = mousePosY;
-
-        // Convert to spherical coordinates
-        const float cameraAngularSpeed = 45.0f;
-        camera.yaw -= dx * cameraAngularSpeed * deltaTime;
-        camera.pitch -= dy * cameraAngularSpeed * deltaTime;
-
-        // Clamp vertical angle to [-89, 89] degrees
-        camera.pitch = std::max(-89.0f, std::min(89.0f, camera.pitch));
-        //Reset horizontal angle values
-        if (camera.yaw > 360) {
-            camera.yaw -= 360;
-        }
-        else if (camera.yaw < -360) {
-            camera.yaw += 360;
-        }
-
-        float theta = glm::radians(camera.yaw);
-        float phi = glm::radians(camera.pitch);
-
-        //Set front facing vector based on yaw and pitch angles
-        camera.front = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-        camera.right = glm::cross(camera.front, glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::normalize(camera.right);
+        camera.panCamera(deltaTime, mousePosX, mousePosY);
     }
-    //On release, reset variable for inital clicks
+    //On release, reset right mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-        firstRightMouse = true;
+        camera.firstRightMouse = true;
     }
     
     //left-mouse -- zoom in and out.
@@ -531,21 +488,11 @@ void getInput(GLFWwindow *window, float deltaTime)
         //get y position only, we don't care about x for zooming in
         double mousePosY;
         glfwGetCursorPos(window, &mousePosY, &mousePosY);
-
-        //Reset on first click
-        if (firstLeftMouse) {
-            lastMousePosY = mousePosY;
-            firstLeftMouse = false;
-        }
-        double dy = mousePosY - lastMousePosY;
-        lastMousePosY = mousePosY;
-
-        //use difference in previous postion to change fov angle
-        camera.setZoom(camera.zoom + dy / 3);
+        camera.zoomCamera(mousePosY);
     }
-    //On release, reset variable for inital clicks
+    //On release, reset left mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-        firstLeftMouse = true;
+        camera.firstLeftMouse = true;
     }  
 }
 
@@ -598,40 +545,46 @@ void drawModels(int worldLoc)
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations
         Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
-        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);
+        /*Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
         Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
         Calvin.draw(worldLoc, calvinColor, scale, modelTranslation, modelRotations);
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
         break;
     case 3:
         Charles.draw(worldLoc, charlesColor, scale, modelTranslation, modelRotations);
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
         break;
     case 4:
         Dante.draw(worldLoc, danteColor, scale, modelTranslation, modelRotations);
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
         break;
     case 5:
         Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation, modelRotations);
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Amanda.yAxis);
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        /*Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
         break;
     default:
         Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
+        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
         Calvin.draw(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
         Charles.draw(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
         Dante.draw(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
         Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
+
         break;
     }
 }
@@ -718,8 +671,42 @@ int main(int argc, char*argv[])
     size = sizeof(calvinPts) / sizeof(glm::vec3);
     Calvin = Model(calvinPts, size);
     //Charles
+    /*glm::vec3 charlesPts[] = {
+        glm::vec3(3.0f,0.0f,0.0f),
+        glm::vec3(3.0f,0.0f,1.0f),
+        glm::vec3(2.0f,0.0f,2.0f),
+        glm::vec3(1.0f,0.0f,3.0f),
+        glm::vec3(0.0f,0.0f,3.0f),
+        glm::vec3(0.0f,1.0f,3.0f),
+        glm::vec3(0.0f,2.0f,2.0f),
+        glm::vec3(0.0f,3.0f,1.0f),
+        glm::vec3(0.0f,3.0f,0.0f)
+    };*/
     glm::vec3 charlesPts[] = {
-        glm::vec3(0.0f,  0.0f, 0.0f)
+        glm::vec3(-3.0f,0.0f,0.0f),
+        glm::vec3(-2.0f,0.0f,0.0f),
+        glm::vec3(-1.0f,0.0f,0.0f),
+        glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(1.0f,0.0f,0.0f),
+        glm::vec3(2.0f,0.0f,0.0f),
+        glm::vec3(3.0f,0.0f,0.0f),
+        glm::vec3(-3.0f,1.0f,0.0f),
+        glm::vec3(-2.0f,1.0f,0.0f),
+        glm::vec3(-1.0f,1.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
+        glm::vec3(1.0f,1.0f,0.0f),
+        glm::vec3(2.0f,1.0f,0.0f),
+        glm::vec3(3.0f,1.0f,0.0f),
+        glm::vec3(-2.0f,2.0f,0.0f),
+        glm::vec3(-1.0f,2.0f,0.0f),
+        glm::vec3(0.0f,2.0f,0.0f),
+        glm::vec3(1.0f,2.0f,0.0f),
+        glm::vec3(2.0f,2.0f,0.0f),
+        glm::vec3(-2.0f,-1.0f,0.0f),
+        glm::vec3(-1.0f,-1.0f,0.0f),
+        glm::vec3(0.0f,-1.0f,0.0f),
+        glm::vec3(1.0f,-1.0f,0.0f),
+        glm::vec3(2.0f,-1.0f,0.0f),
     };
     size = sizeof(charlesPts) / sizeof(glm::vec3);
     Charles = Model(charlesPts, size);

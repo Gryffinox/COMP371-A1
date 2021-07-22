@@ -1,10 +1,4 @@
-//
-//  Model.h
-//  Assignment
-//
-//  Created by Amanda Simard on 2021-07-17.
-//  Copyright © 2021 Concordia. All rights reserved.
-//
+//  COMP 371 Assignment 1 team Last Minute Formed
 
 #ifndef Model_h
 #define Model_h
