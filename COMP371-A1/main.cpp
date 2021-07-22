@@ -47,11 +47,16 @@ glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 //start indices
 int crosshairsIndex;
 int groundIndex;
-int orangeCube;
-int darkorangeCube;
-int yellowCube;
-int tealCube;
-int lightgreenCube;
+int coloredCubeIndex[5];
+
+glm::vec3 color[]=
+{
+    rgb(95,204,232),
+    YELLOW,
+    LIGHT_GREEN,
+    DARK_ORANGE,
+    FUSCHIA,
+};
 
 //counts
 int gvCount;
@@ -71,11 +76,11 @@ Model Yeeho;
 Camera camera;
 Shader shader;
 
-int amandaColor;
-int calvinColor;
-int yeehoColor;
-int danteColor;
-int charlesColor;
+int* amandaColor = &coloredCubeIndex[0];
+int* calvinColor = &coloredCubeIndex[1];
+int* yeehoColor = &coloredCubeIndex[2];
+int* danteColor = &coloredCubeIndex[3];
+int* charlesColor = &coloredCubeIndex[4];
 
 int createVertexArrayObject()
 {
@@ -176,9 +181,9 @@ int createVertexArrayObject()
     }
     
     cubevCount = 36;
-    orangeCube = 10;
     istop = cubevCount * 2;
-    ioffset = orangeCube * 2;
+    coloredCubeIndex[0] = 10;
+    ioffset =  coloredCubeIndex[0]  * 2;
 
     bool addV = false;
     j = 0;
@@ -193,12 +198,12 @@ int createVertexArrayObject()
             
         } else {
             //set color white
-            vertexArray[i + ioffset] = ORANGE;
+            vertexArray[i + ioffset] = color[0];
         }
     }
     
-    yellowCube = 10 + 36;
-    ioffset = yellowCube * 2;
+    coloredCubeIndex[1]  = 10 + 36;
+    ioffset =  coloredCubeIndex[1]  * 2;
     addV = false;
     j=0;
     for(int i = 0; i < istop; i++)
@@ -212,12 +217,12 @@ int createVertexArrayObject()
             
         } else {
             //set color white
-            vertexArray[i + ioffset] = YELLOW;
+            vertexArray[i + ioffset] = color[1];
         }
     }
     
-    lightgreenCube = 10 + 36 * 2;
-    ioffset = lightgreenCube * 2;
+    coloredCubeIndex[2]  = 10 + 36 * 2;
+    ioffset =  coloredCubeIndex[2]  * 2;
     addV = false;
     j=0;
     for(int i = 0; i < istop; i++)
@@ -231,11 +236,11 @@ int createVertexArrayObject()
             
         } else {
             //set color white
-            vertexArray[i + ioffset] = LIGHT_GREEN;
+            vertexArray[i + ioffset] = color[2];
         }
     }
-    tealCube = 10 + 36 * 3;
-    ioffset = tealCube * 2;
+    coloredCubeIndex[3]  = 10 + 36 * 3;
+    ioffset =  coloredCubeIndex[3]  * 2;
     addV = false;
     j=0;
     for(int i = 0; i < istop; i++)
@@ -249,14 +254,14 @@ int createVertexArrayObject()
             
         } else {
             //set color white
-            vertexArray[i + ioffset] = TEAL;
+            vertexArray[i + ioffset] = color[3];
         }
     }
+    coloredCubeIndex[4]  = 10 + 36 * 4;
+    ioffset =  coloredCubeIndex[4]  * 2;
+    addV = false;
+    j=0;
     
-    darkorangeCube = 10 + 36 * 4;
-    ioffset = darkorangeCube * 2;
-    addV = false;
-    j=0;
     for(int i = 0; i < istop; i++)
     {
         addV = !addV;
@@ -268,7 +273,7 @@ int createVertexArrayObject()
             
         } else {
             //set color white
-            vertexArray[i + ioffset] = DARK_ORANGE;
+            vertexArray[i + ioffset] = color[4];
         }
     }
     
@@ -544,46 +549,46 @@ void drawModels(int worldLoc)
     switch (modelToDisplay) {
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations
-        Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
-        /*Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
-        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+        /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
+        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
+        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
-        Calvin.draw(worldLoc, calvinColor, scale, modelTranslation, modelRotations);
-        /*Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
+        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
+        /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
+        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
         break;
     case 3:
-        Charles.draw(worldLoc, charlesColor, scale, modelTranslation, modelRotations);
-        /*Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
+        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
+        /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
+        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
         break;
     case 4:
-        Dante.draw(worldLoc, danteColor, scale, modelTranslation, modelRotations);
-        /*Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
+        Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
+        /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
+        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
         break;
     case 5:
-        Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation, modelRotations);
-        /*Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
+        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
+        /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
+        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
         break;
     default:
-        Amanda.draw(worldLoc, amandaColor, scale, modelTranslation, modelRotations);
-        Amanda.drawWall(worldLoc, amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-        Calvin.draw(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
-        Calvin.drawWall(worldLoc, calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
-        Charles.draw(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
-        Charles.drawWall(worldLoc, charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
-        Dante.draw(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
-        Dante.drawWall(worldLoc, danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
-        Yeeho.draw(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
-        Yeeho.drawWall(worldLoc, yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
+        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
+        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
+        Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
+        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
 
         break;
     }
@@ -753,13 +758,6 @@ int main(int argc, char*argv[])
     
     // Define and upload geometry to the GPU here ...
     int vao = createVertexArrayObject();
-    
-    //set model colors
-    amandaColor = tealCube;
-    calvinColor = orangeCube;
-    yeehoColor = darkorangeCube;
-    danteColor = lightgreenCube;
-    charlesColor = yellowCube;
     
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
