@@ -527,6 +527,14 @@ void drawModels(int worldLoc)
     }
 }
 
+//Handle window resizing
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
+}
+
 
 int main(int argc, char*argv[])
 {
@@ -555,6 +563,8 @@ int main(int argc, char*argv[])
         return -1;
     }
     glfwMakeContextCurrent(window);
+    //Set window resize callback
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
@@ -608,18 +618,8 @@ int main(int argc, char*argv[])
     };
     size = sizeof(calvinPts) / sizeof(glm::vec3);
     Calvin = Model(calvinPts, size);
+    
     //Charles
-    /*glm::vec3 charlesPts[] = {
-        glm::vec3(3.0f,0.0f,0.0f),
-        glm::vec3(3.0f,0.0f,1.0f),
-        glm::vec3(2.0f,0.0f,2.0f),
-        glm::vec3(1.0f,0.0f,3.0f),
-        glm::vec3(0.0f,0.0f,3.0f),
-        glm::vec3(0.0f,1.0f,3.0f),
-        glm::vec3(0.0f,2.0f,2.0f),
-        glm::vec3(0.0f,3.0f,1.0f),
-        glm::vec3(0.0f,3.0f,0.0f)
-    };*/
     glm::vec3 charlesPts[] = {
         glm::vec3(-3.0f,0.0f,0.0f),
         glm::vec3(-2.0f,0.0f,0.0f),
