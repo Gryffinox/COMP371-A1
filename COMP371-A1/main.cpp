@@ -47,16 +47,19 @@ glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 //start indices
 int crosshairsIndex;
 int groundIndex;
-int coloredCubeIndex[5];
 
 glm::vec3 color[]=
 {
-    rgb(95,204,232),
+    LIGHT_BLUE,
     YELLOW,
     LIGHT_GREEN,
     DARK_ORANGE,
     FUSCHIA,
 };
+
+//coloredCube index dynamically set based on number of colors in color[]
+int numberOfColors = (sizeof(color)/sizeof(glm::vec3));
+int* coloredCubeIndex = new int[numberOfColors];
 
 //counts
 int gvCount;
@@ -180,100 +183,30 @@ int createVertexArrayObject()
         j++;
     }
     
+    //add colored cube for each color in color[]
     cubevCount = 36;
     istop = cubevCount * 2;
-    coloredCubeIndex[0] = 10;
-    ioffset =  coloredCubeIndex[0]  * 2;
+    
+    for (int kolor = 0; kolor < numberOfColors; kolor++)
+    {
+        coloredCubeIndex[kolor] = 10 + 36 * kolor;
+        ioffset =  coloredCubeIndex[kolor]  * 2;
 
-    bool addV = false;
-    j = 0;
-    for(int i = 0; i < istop; i++)
-    {
-        addV = !addV;
-        
-        if(addV)
+        bool addV = false;
+        j = 0;
+        for(int i = 0; i < istop; i++)
         {
-            vertexArray[i + ioffset ] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
-            j = j+3;
+            addV = !addV;
             
-        } else {
-            //set color white
-            vertexArray[i + ioffset] = color[0];
-        }
-    }
-    
-    coloredCubeIndex[1]  = 10 + 36;
-    ioffset =  coloredCubeIndex[1]  * 2;
-    addV = false;
-    j=0;
-    for(int i = 0; i < istop; i++)
-    {
-        addV = !addV;
-        
-        if(addV)
-        {
-            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
-            j = j+3;
-            
-        } else {
-            //set color white
-            vertexArray[i + ioffset] = color[1];
-        }
-    }
-    
-    coloredCubeIndex[2]  = 10 + 36 * 2;
-    ioffset =  coloredCubeIndex[2]  * 2;
-    addV = false;
-    j=0;
-    for(int i = 0; i < istop; i++)
-    {
-        addV = !addV;
-        
-        if(addV)
-        {
-            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
-            j = j+3;
-            
-        } else {
-            //set color white
-            vertexArray[i + ioffset] = color[2];
-        }
-    }
-    coloredCubeIndex[3]  = 10 + 36 * 3;
-    ioffset =  coloredCubeIndex[3]  * 2;
-    addV = false;
-    j=0;
-    for(int i = 0; i < istop; i++)
-    {
-        addV = !addV;
-        
-        if(addV)
-        {
-            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
-            j = j+3;
-            
-        } else {
-            //set color white
-            vertexArray[i + ioffset] = color[3];
-        }
-    }
-    coloredCubeIndex[4]  = 10 + 36 * 4;
-    ioffset =  coloredCubeIndex[4]  * 2;
-    addV = false;
-    j=0;
-    
-    for(int i = 0; i < istop; i++)
-    {
-        addV = !addV;
-        
-        if(addV)
-        {
-            vertexArray[i + ioffset] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
-            j = j+3;
-            
-        } else {
-            //set color white
-            vertexArray[i + ioffset] = color[4];
+            if(addV)
+            {
+                vertexArray[i + ioffset ] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
+                j = j+3;
+                
+            } else {
+                //set color
+                vertexArray[i + ioffset] = color[kolor];
+            }
         }
     }
     

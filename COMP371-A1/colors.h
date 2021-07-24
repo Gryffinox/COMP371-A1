@@ -18,6 +18,7 @@ const glm::vec3 DARK_ORANGE = rgb(231,111,81);
 const glm::vec3 TEAL = rgb(42, 157, 143);
 const glm::vec3 LIGHT_GREEN = rgb(138,177,125);
 const glm::vec3 FUSCHIA = rgb(255, 0, 128);
+const glm::vec3 LIGHT_BLUE = rgb(95,204,232);
 const glm::vec3 JET = rgb(52,52,52);
 const glm::vec3 SPACE_CADET = rgb(50,50,75);
 const glm::vec3 LIGHT_SPACE_CADET = rgb(47,48,97);
