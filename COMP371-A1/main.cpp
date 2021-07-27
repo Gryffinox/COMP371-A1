@@ -95,84 +95,94 @@ Shader lightShader;
 
 int createVertexArrayObject()
 {
-    
+    //vertices (with normal)
     float cubeVertices[] = {
-        -0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
         
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
         
-         0.5f,  0.5f,  0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
         
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
     };
     
     glm::vec3 groundArray[] = {
         glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
         glm::vec3(0.0f,0.0f,1.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
         glm::vec3(1.0f,0.0f,1.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
         glm::vec3(1.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
     };
     
     glm::vec3 crosshairArray[] = {
         glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         BLUE,
         glm::vec3(0.0f,0.0f,1.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         BLUE,
         glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         RED,
+        glm::vec3(0.0f,1.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         RED,
         glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         GREEN,
         glm::vec3(1.0f,0.0f,.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
         GREEN,
     };
     
     // array size is cubes: colors * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
-    int arraySize = numberOfColors * 72 + 12 + 8;
+    int arraySize = numberOfColors * 36*3 + 18 + 12;
     glm::vec3 vertexArray[arraySize];
     
     groundIndex = 0;
     gvCount = 4;
-    int istop = gvCount * 2;
+    int istop = gvCount * 3;
     int ioffset = 0;
     int j=0;
     for (int i = 0; i < istop; i++)
@@ -183,23 +193,22 @@ int createVertexArrayObject()
     
     crosshairsIndex = 4;
     chvCount = 6;
-    istop = chvCount * 2;
-    ioffset = crosshairsIndex * 2;
+    istop = chvCount * 3;
+    ioffset = crosshairsIndex * 3;
     j=0;
     for (int i = 0; i < istop; i++)
     {
         vertexArray[i + ioffset] = crosshairArray[j];
         j++;
     }
-    
     //add colored cube for each color in color[]
     cubevCount = 36;
-    istop = cubevCount * 2;
+    istop = cubevCount * 3;
     
     for (int kolor = 0; kolor < numberOfColors; kolor++)
     {
         coloredCubeIndex[kolor] = 10 + 36 * kolor;
-        ioffset =  coloredCubeIndex[kolor]  * 2;
+        ioffset =  coloredCubeIndex[kolor] * 3;
         
         if(color[kolor] == WHITE)
         {
@@ -210,7 +219,10 @@ int createVertexArrayObject()
         j = 0;
         for(int i = 0; i < istop; i++)
         {
-            addV = !addV;
+            if(i%3 == 2)
+                addV = false;
+            else
+                addV=true;
             
             if(addV)
             {
@@ -239,20 +251,27 @@ int createVertexArrayObject()
                           3,                   // size
                           GL_FLOAT,            // type
                           GL_FALSE,            // normalized?
-                          2*sizeof(glm::vec3), // stride - each vertex contain 2 vec3 (position, color)
+                          9*sizeof(float), // stride - each vertex contain 3 vec3 (position, norm, color)
                           (void*)0             // array buffer offset
                           );
     glEnableVertexAttribArray(0);
-
-
-    glVertexAttribPointer(1,                            // attribute 1 matches aColor in Vertex Shader
+    
+    glVertexAttribPointer(1,                   // attribute 1 matches aNorm in Vertex Shader
                           3,
                           GL_FLOAT,
                           GL_FALSE,
-                          2*sizeof(glm::vec3),
-                          (void*)sizeof(glm::vec3)      // color is offseted a vec3 (comes after position)
+                          9*sizeof(float),
+                          (void*)sizeof(glm::vec3)
                           );
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,                   // attribute 2 matches aColor in Vertex Shader
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          9*sizeof(float),
+                          (void*)(2*sizeof(glm::vec3))
+                          );
+    glEnableVertexAttribArray(2);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -460,6 +479,8 @@ void draw(Shader shader, int vao)
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
+    //TODO: adjust camera.h to use multiple shaders
+    //lightShader.use();
     drawLight(worldMatrixLocation);
 
 }
@@ -709,7 +730,7 @@ int main(int argc, char*argv[])
     Yeeho = Model(yeehoPts, size);
     
     //hide mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set Background Color
     glClearColor(DARK_BLUE.x, DARK_BLUE.y, DARK_BLUE.z, 1.0f);
