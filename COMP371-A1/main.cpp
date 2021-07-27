@@ -627,7 +627,7 @@ int main(int argc, char*argv[])
     shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
     //set camera position
-    camera = Camera(&shader);
+    camera = Camera(&shader, &lightShader);
 
 
     //TODO: get models from inputs
@@ -730,7 +730,7 @@ int main(int argc, char*argv[])
     Yeeho = Model(yeehoPts, size);
     
     //hide mouse
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set Background Color
     glClearColor(DARK_BLUE.x, DARK_BLUE.y, DARK_BLUE.z, 1.0f);

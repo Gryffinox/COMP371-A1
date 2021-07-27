@@ -12,8 +12,9 @@ const float rotationSpeedMult = 25.f;
 class Camera
 {
 public:
-    // Shader
+    // Shaders
     Shader* shader;
+    Shader* lightShader;
     // camera Attributes
     glm::vec3 position;
     glm::vec3 front;
@@ -30,6 +31,9 @@ public:
     
     GLuint viewMatrixLocation;
     GLuint projectionMatrixLocation;
+    GLuint viewLight;
+    GLuint projectionLight;
+    GLuint viewPosLight;
 
     //camera pan
     bool firstLeftMouse;
@@ -40,9 +44,10 @@ public:
     //Default constructor
     Camera(){}
     
-    Camera(Shader* shader)
+    Camera(Shader* shader, Shader* lightShader)
     {
         this->shader = shader;
+        this->lightShader = lightShader;
         position = glm::vec3(0.0f, 0.0f, -10.0f);
         front = glm::vec3(0.0f,0.0f,1.0f);
         up = glm::vec3(0.0f,1.0f,0.0f);
@@ -54,6 +59,9 @@ public:
         zoom = 75.0f;
         viewMatrixLocation = shader->getUniform("viewMatrix");
         projectionMatrixLocation = shader->getUniform("projectionMatrix");
+        viewPosLight = shader->getUniform("viewPos");
+        viewLight = lightShader->getUniform("viewMatrix");
+        projectionLight = lightShader->getUniform("projectionMatrix");
         firstLeftMouse = true;
         firstRightMouse = true;
         lastMousePosX = 0;
@@ -161,12 +169,20 @@ public:
     //Update camera view based on settings
     void updateCam()
     {
+        //set matrix in both shaders
         glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
         glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+        glUniformMatrix4fv(viewLight, 1, GL_FALSE, &viewMatrix[0][0]);
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(zoom),  // field of view in degrees
                                                       1024.0f / 768.0f,      // aspect ratio
                                                       0.1f, 100.0f);       // near and far (near > 0)
         glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+        glUniformMatrix4fv(projectionLight, 1, GL_FALSE, &projectionMatrix[0][0]);
+        
+        //make sure view position updated.
+        glUniform3fv(viewPosLight, 1, &position[0]);
+        
+        
     }
     
     //Move camera position relative to world space
