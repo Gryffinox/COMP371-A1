@@ -89,8 +89,8 @@ int* charlesColor = &coloredCubeIndex[4];
 
 //variables
 int lightCubeIndex;
-glm::vec3 lightPos = glm::vec3(1,1,1);
-float lightScale = 0.5;
+glm::vec3 lightPos = glm::vec3(0,30,0);
+float lightScale = 5;
 Shader lightShader;
 
 int createVertexArrayObject()
@@ -479,9 +479,8 @@ void draw(Shader shader, int vao)
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
-    //TODO: adjust camera.h to use multiple shaders
-    //lightShader.use();
-    drawLight(worldMatrixLocation);
+    
+    drawLight(lightShader.getUniform("worldMatrix"));
 
 }
 
@@ -566,7 +565,7 @@ void drawModels(int worldLoc)
 //draw light cube
 void drawLight(int worldLoc)
 {
-   
+    lightShader.use();
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(lightScale, lightScale, lightScale));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),lightPos);
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
@@ -626,6 +625,9 @@ int main(int argc, char*argv[])
     //initialize shaders
     shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
+    //set light position
+    glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
+    
     //set camera position
     camera = Camera(&shader, &lightShader);
 

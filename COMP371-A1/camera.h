@@ -165,22 +165,26 @@ public:
             zoom = 150;
         }
     }
-  
+    
     //Update camera view based on settings
     void updateCam()
     {
+        shader->use();
         //set matrix in both shaders
         glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
         glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-        glUniformMatrix4fv(viewLight, 1, GL_FALSE, &viewMatrix[0][0]);
+       
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(zoom),  // field of view in degrees
                                                       1024.0f / 768.0f,      // aspect ratio
                                                       0.1f, 100.0f);       // near and far (near > 0)
         glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-        glUniformMatrix4fv(projectionLight, 1, GL_FALSE, &projectionMatrix[0][0]);
         
         //make sure view position updated.
         glUniform3fv(viewPosLight, 1, &position[0]);
+        
+        lightShader->use();
+        glUniformMatrix4fv(viewLight, 1, GL_FALSE, &viewMatrix[0][0]);
+        glUniformMatrix4fv(projectionLight, 1, GL_FALSE, &projectionMatrix[0][0]);
         
         
     }
