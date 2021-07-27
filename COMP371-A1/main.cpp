@@ -35,6 +35,7 @@ float lastFrame = 0.0f; // Time of last frame
 void drawGround(int worldLoc);
 void drawCrosshairs(int worldLoc);
 void drawModels(int worldLoc);
+void drawLight(int worldLoc);
 
 float scale = 1.0f;
 glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
@@ -55,6 +56,7 @@ glm::vec3 color[]=
     LIGHT_GREEN,
     DARK_ORANGE,
     FUSCHIA,
+    WHITE
 };
 
 //coloredCube index dynamically set based on number of colors in color[]
@@ -84,6 +86,12 @@ int* calvinColor = &coloredCubeIndex[1];
 int* yeehoColor = &coloredCubeIndex[2];
 int* danteColor = &coloredCubeIndex[3];
 int* charlesColor = &coloredCubeIndex[4];
+
+//variables
+int lightCubeIndex;
+glm::vec3 lightPos = glm::vec3(1,1,1);
+float lightScale = 0.5;
+Shader lightShader;
 
 int createVertexArrayObject()
 {
@@ -158,8 +166,9 @@ int createVertexArrayObject()
         GREEN,
     };
     
-    // array size is cubes: 5 * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
-    glm::vec3 vertexArray[380];
+    // array size is cubes: colors * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
+    int arraySize = numberOfColors * 72 + 12 + 8;
+    glm::vec3 vertexArray[arraySize];
     
     groundIndex = 0;
     gvCount = 4;
@@ -191,6 +200,11 @@ int createVertexArrayObject()
     {
         coloredCubeIndex[kolor] = 10 + 36 * kolor;
         ioffset =  coloredCubeIndex[kolor]  * 2;
+        
+        if(color[kolor] == WHITE)
+        {
+            lightCubeIndex = coloredCubeIndex[kolor];
+        }
 
         bool addV = false;
         j = 0;
@@ -446,6 +460,7 @@ void draw(Shader shader, int vao)
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
+    drawLight(worldMatrixLocation);
 
 }
 
@@ -527,6 +542,19 @@ void drawModels(int worldLoc)
     }
 }
 
+//draw light cube
+void drawLight(int worldLoc)
+{
+   
+    glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(lightScale, lightScale, lightScale));
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),lightPos);
+    glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
+    glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+    //TODO: replace magic numbers with constants
+    glDrawArrays(GL_TRIANGLES, lightCubeIndex, 36);
+       
+}
+
 //Handle window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -575,7 +603,8 @@ int main(int argc, char*argv[])
     }
 
     //initialize shaders
-    shader = Shader("vertexShader.glsl", "fragmentShader.glsl");
+    shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
+    lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
     //set camera position
     camera = Camera(&shader);
 
