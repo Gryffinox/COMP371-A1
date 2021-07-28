@@ -40,5 +40,11 @@
     <None Include="vertexShader.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="FragmentShaderLight.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="VertexShaderLight.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

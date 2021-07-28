@@ -177,8 +177,9 @@ int createVertexArrayObject()
     };
     
     // array size is cubes: colors * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
-    int arraySize = numberOfColors * 36*3 + 18 + 12;
-    glm::vec3 vertexArray[arraySize];
+    int arraySize = numberOfColors * 36 * 3 + 18 + 12;
+    //glm::vec3 vertexArray[arraySize];
+    glm::vec3 vertexArray[678];
     
     groundIndex = 0;
     gvCount = 4;
