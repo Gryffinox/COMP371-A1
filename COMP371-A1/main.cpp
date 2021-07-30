@@ -93,6 +93,9 @@ glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
 Shader lightShader;
 
+bool firstM = true;
+bool cursorEnabled = false;
+
 int createVertexArrayObject()
 {
     //vertices (with normal)
@@ -465,7 +468,27 @@ void getInput(GLFWwindow *window, float deltaTime)
     //On release, reset left mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         camera.firstLeftMouse = true;
-    }  
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+        {
+            if(firstM)
+            {
+                if(cursorEnabled)
+                {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                } else
+                {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
+                cursorEnabled = !cursorEnabled;
+                firstM = false;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_RELEASE)
+        {
+            firstM = true;
+        }
 }
 
 //Draw everything calls other draw functions
@@ -582,6 +605,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+    camera.setWH(width, height);
 }
 
 
@@ -630,7 +654,7 @@ int main(int argc, char*argv[])
     glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
     
     //set camera position
-    camera = Camera(&shader, &lightShader);
+    camera = Camera(&shader, &lightShader, SCR_WIDTH, SCR_HEIGHT);
 
 
     //TODO: get models from inputs
