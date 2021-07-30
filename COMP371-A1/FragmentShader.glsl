@@ -52,4 +52,4 @@ void main()
         {
             FragColor += intensity * (texture(emissionMap, vec2(textureCoords.x, textureCoords.y)) *  vec4(vertexColor, 1.0));
         }   
-}
+
