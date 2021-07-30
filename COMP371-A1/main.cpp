@@ -11,7 +11,7 @@
 #include <GL/glew.h>    // Include GLEW - OpenGL Extension Wrangler
 
 #include <GLFW/glfw3.h> // GLFW provides a cross-platform interface for creating a graphical context,
-                        // initializing OpenGL and binding inputs
+// initializing OpenGL and binding inputs
 
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
@@ -20,6 +20,9 @@
 #include "camera.h"
 #include "colors.h"
 #include "model.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 const float SCR_WIDTH = 1024.0f;
@@ -41,8 +44,6 @@ float scale = 1.0f;
 glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
 glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
-
-
 
 //vertex start index and count variables
 //start indices
@@ -87,27 +88,42 @@ int* yeehoColor = &coloredCubeIndex[2];
 int* danteColor = &coloredCubeIndex[3];
 int* charlesColor = &coloredCubeIndex[4];
 
-//variables
+//light variables
 int lightCubeIndex;
 glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
 Shader lightShader;
+
+// texture variables
+unsigned int brickTexture, metalTexture, emissionMap;
+
+enum Texture
+{
+    BRICK,
+    METAL,
+    NONE
+};
+
+Texture selectedTexture = NONE;
+float glowIntensity = 1;
+bool glowIncreasing = false;
+
 
 int createVertexArrayObject()
 {
     //vertices (with normal)
     float cubeVertices[] = {
         -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
         -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
         -0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
-
+        
         -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
         -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
         -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
         
@@ -118,72 +134,139 @@ int createVertexArrayObject()
         -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
         -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
         
-         0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f, 1.0f,  0.0f,  0.0f,
         
         -0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
         -0.5f, -0.5f,  0.5f, 0.0f, -1.0f,  0.0f,
         -0.5f, -0.5f, -0.5f, 0.0f, -1.0f,  0.0f,
-
+        
         -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
         -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f,
         -0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f,
     };
     
+    //note third coordinate not used, implemented as vec3 to simplify holding all info in 1 vertexArray of vec3
+    glm::vec3 textureCoords[] =
+    {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3( 1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+    };
+    
+    //TODO: figure out ground texture coordinate
     glm::vec3 groundArray[] = {
         glm::vec3(0.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(0.0f,0.0f,1.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(1.0f,0.0f,1.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(1.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
+        glm::vec3(0.0f, 0.0f, 0.0f),
     };
     
+    //note, texture coordinates are placeholders and are not used.
     glm::vec3 crosshairArray[] = {
         glm::vec3(0.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         BLUE,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(0.0f,0.0f,1.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         BLUE,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(0.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         RED,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(0.0f,1.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         RED,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(0.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         GREEN,
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        
         glm::vec3(1.0f,0.0f,.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         GREEN,
+        glm::vec3(0.0f, 0.0f, 0.0f),
     };
     
-    // array size is cubes: colors * (36 vertices + 36 colors) + crosshairs: (6 vertices + 6 colors) + ground: (4 vertices + 4 colors)
-    int arraySize = numberOfColors * 36 * 3 + 18 + 12;
-    //glm::vec3 vertexArray[arraySize];
-    glm::vec3 vertexArray[678];
+    // array size is (cubes: colors * 36 vertices + crosshairs: 6 vertices + ground: 4 vertices) * 4 -- vertice coords, norm vector, color, texture coords
+    int numParameters = 4;
+    int arraySize = (numberOfColors * 36 + 6 + 4) * numParameters;
+    //glm::vec3* vertexArray = new glm::vec3[arraySize];
+    glm::vec3 vertexArray[904];
     
     groundIndex = 0;
     gvCount = 4;
-    int istop = gvCount * 3;
+    int istop = gvCount * numParameters;
     int ioffset = 0;
     int j=0;
     for (int i = 0; i < istop; i++)
@@ -194,8 +277,8 @@ int createVertexArrayObject()
     
     crosshairsIndex = 4;
     chvCount = 6;
-    istop = chvCount * 3;
-    ioffset = crosshairsIndex * 3;
+    istop = chvCount * numParameters;
+    ioffset = crosshairsIndex * numParameters;
     j=0;
     for (int i = 0; i < istop; i++)
     {
@@ -204,35 +287,39 @@ int createVertexArrayObject()
     }
     //add colored cube for each color in color[]
     cubevCount = 36;
-    istop = cubevCount * 3;
+    istop = cubevCount * numParameters;
     
     for (int kolor = 0; kolor < numberOfColors; kolor++)
     {
         coloredCubeIndex[kolor] = 10 + 36 * kolor;
-        ioffset =  coloredCubeIndex[kolor] * 3;
+        ioffset =  coloredCubeIndex[kolor] * numParameters;
         
         if(color[kolor] == WHITE)
         {
             lightCubeIndex = coloredCubeIndex[kolor];
         }
-
-        bool addV = false;
+        
         j = 0;
+        int k = 0;
         for(int i = 0; i < istop; i++)
         {
-            if(i%3 == 2)
-                addV = false;
-            else
-                addV=true;
-            
-            if(addV)
+            //if location 0 or 1, turn coordinates from cubeVertices into vec3
+            if(i%numParameters == 0 || i%numParameters == 1)
             {
                 vertexArray[i + ioffset ] = glm::vec3(cubeVertices[j],cubeVertices[j+1],cubeVertices[j+2]);
                 j = j+3;
                 
             } else {
-                //set color
-                vertexArray[i + ioffset] = color[kolor];
+                //if location 2, set color
+                if(i%numParameters == 2)
+                {
+                    vertexArray[i + ioffset] = color[kolor];
+                } else
+                {
+                    //if location 3, set texture coords
+                    vertexArray[i + ioffset] = textureCoords[k++];
+                }
+                
             }
         }
     }
@@ -247,12 +334,12 @@ int createVertexArrayObject()
     glGenBuffers(1, &vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexArray), vertexArray, GL_STATIC_DRAW);
-
+    
     glVertexAttribPointer(0,                   // attribute 0 matches aPos in Vertex Shader
                           3,                   // size
                           GL_FLOAT,            // type
                           GL_FALSE,            // normalized?
-                          9*sizeof(float), // stride - each vertex contain 3 vec3 (position, norm, color)
+                          numParameters*sizeof(glm::vec3), // stride - each vertex contain 3 vec3 (position, norm, color)
                           (void*)0             // array buffer offset
                           );
     glEnableVertexAttribArray(0);
@@ -261,7 +348,7 @@ int createVertexArrayObject()
                           3,
                           GL_FLOAT,
                           GL_FALSE,
-                          9*sizeof(float),
+                          numParameters*sizeof(glm::vec3),
                           (void*)sizeof(glm::vec3)
                           );
     glEnableVertexAttribArray(1);
@@ -269,16 +356,83 @@ int createVertexArrayObject()
                           3,
                           GL_FLOAT,
                           GL_FALSE,
-                          9*sizeof(float),
+                          numParameters*sizeof(glm::vec3),
                           (void*)(2*sizeof(glm::vec3))
                           );
     glEnableVertexAttribArray(2);
-
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
+    glVertexAttribPointer(3,                   // attribute 3 matches textCoords in Vertex Shader
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          numParameters*sizeof(glm::vec3),
+                          (void*)(3*sizeof(glm::vec3))
+                          );
+    glEnableVertexAttribArray(3);
     
-
-  return vertexArrayObject;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    
+    // load and create a texture
+    // texture 1
+    // ---------
+    glGenTextures(1, &brickTexture);
+    glBindTexture(GL_TEXTURE_2D, brickTexture);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    unsigned char *data = stbi_load("brick.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    // texture 2
+    // ---------
+    glGenTextures(1, &metalTexture);
+    glBindTexture(GL_TEXTURE_2D, metalTexture);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("silver.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    // texture 3
+    // ---------
+    glGenTextures(1, &emissionMap);
+    glBindTexture(GL_TEXTURE_2D, emissionMap);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("glowMap-01.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    
+    
+    
+    return vertexArrayObject;
 }
 
 //Settings to reset whenever switching model (through controls 1-5 and Home)
@@ -289,8 +443,8 @@ void sceneReset() {
 }
 
 /*=====================================================================
-Input controls
-=====================================================================*/
+ Input controls
+ =====================================================================*/
 void getInput(GLFWwindow *window, float deltaTime)
 {
     
@@ -304,25 +458,25 @@ void getInput(GLFWwindow *window, float deltaTime)
         modelToDisplay = 1;
         sceneReset();
     }
-
+    
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
         modelToDisplay = 2;
         sceneReset();
     }
-
+    
     if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
     {
         modelToDisplay = 3;
         sceneReset();
     }
-
+    
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
     {
         modelToDisplay = 4;
         sceneReset();
     }
-
+    
     if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
     {
         modelToDisplay = 5;
@@ -347,12 +501,12 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
         camera.moveLeft(deltaTime);
-    }    
+    }
     //press S -- move backward
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
         camera.moveBack(deltaTime);
-    }    
+    }
     //press D -- move right
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
@@ -383,7 +537,7 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
         modelTranslation.z += (deltaTime * modelMoveSpeedMult);
-    }  
+    }
     //k -- move model down (backward)
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
@@ -416,14 +570,14 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-
+    
     //Scale up and down
     //=====================================================================
     //press + -- scale-up
     if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
         scale += deltaTime;
     }
-
+    
     //press - -- scale-down
     if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
         scale -= deltaTime;
@@ -431,7 +585,7 @@ void getInput(GLFWwindow *window, float deltaTime)
             scale = 0;
         }
     }
-
+    
     //shuffle
     //=====================================================================
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
@@ -444,7 +598,7 @@ void getInput(GLFWwindow *window, float deltaTime)
     }
     
     //right mouse -- pan camera in any direction
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {   
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         //Current mouse pos
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
@@ -465,7 +619,54 @@ void getInput(GLFWwindow *window, float deltaTime)
     //On release, reset left mouse click variable for inital click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         camera.firstLeftMouse = true;
-    }  
+    }
+}
+
+void setTexture()
+{
+    shader.use();
+    if(glowIncreasing)
+    {
+        glowIntensity += 0.2 * deltaTime;
+    } else {
+        glowIntensity -= 0.2 * deltaTime;
+    }
+    if (glowIntensity >= 1.6)
+        glowIncreasing = false;
+    if (glowIntensity <= 0.6)
+        glowIncreasing = true;
+    switch(selectedTexture)
+    {
+        case BRICK:
+            shader.setBool("textureOn", true);
+            shader.setBool("glowOn", false);
+            shader.setBool("tex", 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, brickTexture);
+            break;
+        case METAL:
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, metalTexture);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, emissionMap);
+            shader.setBool("textureOn", true);
+            shader.setBool("glowOn", true);
+            shader.setFloat("intensity", glowIntensity);
+            shader.setBool("tex", 1);
+            shader.setInt("emissionMap", 2);
+            break;
+        case NONE:
+            shader.setBool("textureOn", false);
+            shader.setBool("glowOn", false);
+            break;
+    }
+}
+
+void setTexture(Texture text)
+{
+    
+    selectedTexture = text;
+    setTexture();
 }
 
 //Draw everything calls other draw functions
@@ -476,13 +677,13 @@ void draw(Shader shader, int vao)
     glBindVertexArray(vao);
     
     GLuint worldMatrixLocation = shader.getUniform("worldMatrix");
-    
+    setTexture(NONE);
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
     
     drawLight(lightShader.getUniform("worldMatrix"));
-
+    
 }
 
 //Draws the 100*100 grid
@@ -516,50 +717,54 @@ void drawCrosshairs(int worldLoc)
 void drawModels(int worldLoc)
 {
     switch (modelToDisplay) {
-    case 1:
-        //parameters: world location as int, vertex array offset, s t r transformations
-        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
-        /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
-        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-        break;
-    case 2:
-        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
-        /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
-        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
-        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
-        break;
-    case 3:
-        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
-        /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
-        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
-        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
-        break;
-    case 4:
-        Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
-        /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
-        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
-        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
-        break;
-    case 5:
-        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
-        /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
-        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
-        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
-        break;
-    default:
-        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
-        Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
-        Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
-        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
-        Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
-        Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
-        Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
-        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
-        Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
-
-        break;
+        case 1:
+            //parameters: world location as int, vertex array offset, s t r transformations
+            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+            /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
+             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
+            Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+            break;
+        case 2:
+            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
+            /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
+             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+            Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
+            break;
+        case 3:
+            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
+            /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
+             Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+            Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
+            break;
+        case 4:
+            Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
+            /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
+             Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+            Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
+            break;
+        case 5:
+            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
+            /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
+             Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+            Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
+            break;
+        default:
+            setTexture(METAL);
+            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+            
+            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+            
+            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+            
+            Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+            setTexture(BRICK);
+            Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
+            Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
+            Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
+            Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
+            Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
+            break;
     }
 }
 
@@ -573,7 +778,7 @@ void drawLight(int worldLoc)
     glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
     //TODO: replace magic numbers with constants
     glDrawArrays(GL_TRIANGLES, lightCubeIndex, 36);
-       
+    
 }
 
 //Handle window resizing
@@ -601,7 +806,7 @@ int main(int argc, char*argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #endif
-
+    
     // Create Window and rendering context using GLFW
     //Resolution 1024 x 768
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Comp371 - Assignment", NULL, NULL);
@@ -614,7 +819,7 @@ int main(int argc, char*argv[])
     glfwMakeContextCurrent(window);
     //Set window resize callback
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+    
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
     if (glewInit() != GLEW_OK) {
@@ -622,7 +827,7 @@ int main(int argc, char*argv[])
         glfwTerminate();
         return -1;
     }
-
+    
     //initialize shaders
     shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
@@ -631,21 +836,21 @@ int main(int argc, char*argv[])
     
     //set camera position
     camera = Camera(&shader, &lightShader);
-
-
+    
+    
     //TODO: get models from inputs
     //Amanda
     glm::vec3 amandaPts[] = {
-            glm::vec3(-1.f,  -1.f, -5.0f),
-            glm::vec3(-0.f,  -0.f, -4.0f),
-            glm::vec3(1.f,  1.f, -3.0f),
-            glm::vec3(2.f,  2.f, -2.f),
-            glm::vec3(2.f,  1.f, -1.f),
-            glm::vec3(2.f,  -0.f, 0.f),
-            glm::vec3(2.f,  -1.f, 1.f),
-            glm::vec3(1.f,  -0.f, 2.f),
-            glm::vec3(0.f,  1.f, 3.f),
-            glm::vec3(-1.f,  2.f, 4.f),
+        glm::vec3(-1.f,  -1.f, -5.0f),
+        glm::vec3(-0.f,  -0.f, -4.0f),
+        glm::vec3(1.f,  1.f, -3.0f),
+        glm::vec3(2.f,  2.f, -2.f),
+        glm::vec3(2.f,  1.f, -1.f),
+        glm::vec3(2.f,  -0.f, 0.f),
+        glm::vec3(2.f,  -1.f, 1.f),
+        glm::vec3(1.f,  -0.f, 2.f),
+        glm::vec3(0.f,  1.f, 3.f),
+        glm::vec3(-1.f,  2.f, 4.f),
     };
     float size = sizeof(amandaPts) / sizeof(glm::vec3);
     Amanda = Model(amandaPts, size);
@@ -734,7 +939,7 @@ int main(int argc, char*argv[])
     
     //hide mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
+    
     // Set Background Color
     glClearColor(DARK_BLUE.x, DARK_BLUE.y, DARK_BLUE.z, 1.0f);
     // Enable Depth Test
