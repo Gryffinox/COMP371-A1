@@ -95,12 +95,19 @@ float lightScale = 5;
 Shader lightShader;
 
 // texture variables
-unsigned int brickTexture, metalTexture, emissionMap;
+unsigned int brickTexture, metalTexture, emissionMap, tileTexture;
+bool textured = true;
+bool glowing = true;
+
+// input variable
+bool firstX;
+bool firstG;
 
 enum Texture
 {
     BRICK,
     METAL,
+    TILE,
     NONE
 };
 
@@ -173,19 +180,19 @@ int createVertexArrayObject()
         glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         
-        glm::vec3(1.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 1.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 0.0f, 0.0f),
-        
-        glm::vec3(1.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(1.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec3(1.0f, 0.0f, 0.0f),
+
+        glm::vec3(1.0f, 1.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
         
         glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(1.0f, 1.0f, 0.0f),
@@ -212,17 +219,27 @@ int createVertexArrayObject()
         glm::vec3(0.0f,0.0f,1.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        
-        glm::vec3(1.0f,0.0f,1.0f),
-        glm::vec3(0.0f,1.0f,0.0f),
-        YELLOW,
-        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
         
         glm::vec3(1.0f,0.0f,0.0f),
         glm::vec3(0.0f,1.0f,0.0f),
         YELLOW,
-        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+
+        glm::vec3(0.0f,0.0f,1.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
+        YELLOW,
+        glm::vec3(0.0f, 1.0f, 0.0f),
+
+        glm::vec3(1.0f,0.0f,1.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
+        YELLOW,
+        glm::vec3(1.0f, 1.0f, 0.0f),
+
+        glm::vec3(1.0f,0.0f,0.0f),
+        glm::vec3(0.0f,1.0f,0.0f),
+        YELLOW,
+        glm::vec3(1.0f, 0.0f, 0.0f),
     };
     
     //note, texture coordinates are placeholders and are not used.
@@ -260,12 +277,12 @@ int createVertexArrayObject()
     
     // array size is (cubes: colors * 36 vertices + crosshairs: 6 vertices + ground: 4 vertices) * 4 -- vertice coords, norm vector, color, texture coords
     int numParameters = 4;
-    int arraySize = (numberOfColors * 36 + 6 + 4) * numParameters;
+    int arraySize = (numberOfColors * 36 + 6 + 6) * numParameters;
     //glm::vec3* vertexArray = new glm::vec3[arraySize];
-    glm::vec3 vertexArray[904];
+    glm::vec3 vertexArray[912];
     
     groundIndex = 0;
-    gvCount = 4;
+    gvCount = 6;
     int istop = gvCount * numParameters;
     int ioffset = 0;
     int j=0;
@@ -275,7 +292,7 @@ int createVertexArrayObject()
         j++;
     }
     
-    crosshairsIndex = 4;
+    crosshairsIndex = 6;
     chvCount = 6;
     istop = chvCount * numParameters;
     ioffset = crosshairsIndex * numParameters;
@@ -291,7 +308,7 @@ int createVertexArrayObject()
     
     for (int kolor = 0; kolor < numberOfColors; kolor++)
     {
-        coloredCubeIndex[kolor] = 10 + 36 * kolor;
+        coloredCubeIndex[kolor] = 12 + 36 * kolor;
         ioffset =  coloredCubeIndex[kolor] * numParameters;
         
         if(color[kolor] == WHITE)
@@ -430,6 +447,23 @@ int createVertexArrayObject()
     }
     stbi_image_free(data);
     
+    // texture 4
+    // ---------
+    glGenTextures(1, &tileTexture);
+    glBindTexture(GL_TEXTURE_2D, tileTexture);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("tile.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
     
     
     return vertexArrayObject;
@@ -620,6 +654,31 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
         camera.firstLeftMouse = true;
     }
+
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+    {
+        if (firstX)
+        {
+            textured = !textured;
+            firstX = false;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE)
+    {
+        firstX = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+    {
+        if (firstG)
+        {
+            glowing = !glowing;
+            firstG = false;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE)
+    {
+        firstG = true;
+    }
 }
 
 void setTexture()
@@ -631,16 +690,17 @@ void setTexture()
     } else {
         glowIntensity -= 0.2 * deltaTime;
     }
-    if (glowIntensity >= 1.6)
+    if (glowIntensity >= 2.0)
         glowIncreasing = false;
-    if (glowIntensity <= 0.6)
+    if (glowIntensity <= 0.4)
         glowIncreasing = true;
     switch(selectedTexture)
     {
         case BRICK:
-            shader.setBool("textureOn", true);
+            shader.setBool("colorOn", !textured);
+            shader.setBool("textureOn", textured);
             shader.setBool("glowOn", false);
-            shader.setBool("tex", 0);
+            shader.setInt("tex", 0);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, brickTexture);
             break;
@@ -649,11 +709,21 @@ void setTexture()
             glBindTexture(GL_TEXTURE_2D, metalTexture);
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, emissionMap);
-            shader.setBool("textureOn", true);
-            shader.setBool("glowOn", true);
+            shader.setBool("colorOn", true);
+            shader.setBool("textureOn", textured);
+            shader.setBool("glowOn", glowing);
             shader.setFloat("intensity", glowIntensity);
-            shader.setBool("tex", 1);
+            shader.setInt("tex", 1);
             shader.setInt("emissionMap", 2);
+            break;
+        case TILE: 
+            shader.setBool("colorOn", !textured);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, tileTexture);
+            shader.setBool("textureOn", textured);
+            shader.setBool("glowOn", false);
+            shader.setInt("tex", 3);
+            
             break;
         case NONE:
             shader.setBool("textureOn", false);
@@ -689,6 +759,7 @@ void draw(Shader shader, int vao)
 //Draws the 100*100 grid
 void drawGround(int worldLoc)
 {
+    setTexture(TILE);
     for(int i = 0; i<100; i++)
     {
         for (int j = 0; j<100; j++)
@@ -697,7 +768,7 @@ void drawGround(int worldLoc)
             glm::mat4 worldMatrix =  translationMatrix;
             glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
             //TODO: replace magic numbers with constants
-            glDrawArrays(GL_LINE_LOOP, groundIndex, 4);
+            glDrawArrays(GL_TRIANGLES, groundIndex, 6);
         }
     }
 }
