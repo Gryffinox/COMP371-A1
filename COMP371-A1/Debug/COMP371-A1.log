@@ -1,16 +1,22 @@
 ﻿  main.cpp
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\shader.h(51,40): warning C4101: 'e': unreferenced local variable
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(128,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(129,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\camera.h(160,1): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(146,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(147,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(148,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(156,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(169,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(182,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(463,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(607,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(607,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(753,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  COMP371-A1.vcxproj -> C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\shader.h(51,40): warning C4101: 'e': unreferenced local variable
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\camera.h(97,24): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\camera.h(128,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\camera.h(129,1): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\camera.h(160,1): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(146,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(147,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(148,108): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(156,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(169,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\model.h(182,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(651,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(689,41): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(691,41): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(883,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(883,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\main.cpp(1029,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+glew32s.lib(glew.obj) : warning LNK4099: PDB 'vc120.pdb' was not found with 'glew32s.lib(glew.obj)' or at 'C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\Debug\vc120.pdb'; linking object as if no debug info
+  COMP371-A1.vcxproj -> C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe

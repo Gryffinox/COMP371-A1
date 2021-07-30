@@ -22,7 +22,7 @@ uniform bool colorOn = true;
 void main()
 {
     // ambient
-        float ambientStrength = 0.5;
+        float ambientStrength = 0.7;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -38,17 +38,18 @@ void main()
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
         vec3 specular = specularStrength * spec * lightColor;
     
-        vec3 litColor = (ambient + diffuse + specular ) * vertexColor;
-        
+        vec3 litColor = (ambient + diffuse + specular );
+        if (colorOn){
+        litColor = (ambient + diffuse + specular ) * vertexColor;
+        }
     if(textureOn)
     {
-        FragColor = texture(tex, vec2(textureCoords.x, textureCoords.y)) *  vec4(litColor, 1.0);
-        if(glowOn)
-        {
-            FragColor += intensity * (texture(emissionMap, vec2(textureCoords.x, textureCoords.y)) *  vec4(vertexColor, 1.0));
-        }
+        FragColor = texture(tex, vec2(textureCoords.x, textureCoords.y)) *  vec4(litColor, 1.0);   
     } else {
         FragColor = vec4(litColor, 1.0);
     }
-        
+     if(glowOn)
+        {
+            FragColor += intensity * (texture(emissionMap, vec2(textureCoords.x, textureCoords.y)) *  vec4(vertexColor, 1.0));
+        }   
 }
