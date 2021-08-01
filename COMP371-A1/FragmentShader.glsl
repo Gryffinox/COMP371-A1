@@ -9,9 +9,29 @@ uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor = vec3(1.0,1.0,1.0);
 
+//shadow stuff
+in vec4 FragPosLightSpace;
+uniform sampler2D shadowMap;
+
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // check whether current frag pos is in shadow - adjust for peter panning
+    float shadow = currentDepth - 0.01 > closestDepth  ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 void main()
 {
-    // ambient
+        // ambient
         float ambientStrength = 0.5;
         vec3 ambient = ambientStrength * lightColor;
           
@@ -28,6 +48,9 @@ void main()
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
         vec3 specular = specularStrength * spec * lightColor;
             
-        vec3 litColor = (ambient + diffuse + specular) * vertexColor;
+        // calculate shadow
+        float shadow = ShadowCalculation(FragPosLightSpace);
+
+        vec3 litColor = (ambient + (1.0 - shadow) * (diffuse + specular)) * vertexColor;
         FragColor = vec4(litColor, 1.0);
 }

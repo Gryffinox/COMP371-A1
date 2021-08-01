@@ -93,6 +93,9 @@ glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
 Shader lightShader;
 
+//shadow variables
+Shader depthShader;
+
 int createVertexArrayObject()
 {
     //vertices (with normal)
@@ -626,6 +629,7 @@ int main(int argc, char*argv[])
     //initialize shaders
     shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
+    depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
     //set light position
     glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
     
@@ -732,6 +736,48 @@ int main(int argc, char*argv[])
     size = sizeof(yeehoPts) / sizeof(glm::vec3);
     Yeeho = Model(yeehoPts, size);
     
+    /*==================================================
+        Shadow Setup
+    ==================================================*/
+    //Taken from https://learnopengl.com
+    // configure depth map FBO
+    // -----------------------
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;   //shadow texture resolution
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);                             //generate new framebuffer for our shadow depth map
+    // create depth texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    //Texture type, mipmap level, format to store texture as, size, size, deprecated, original texture format, original texture data type, the texture itself
+    //for a shadow texture, because we'll be generating it, we pass NULL.
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //Define texture behaviours - repeat over x-y axis, texel filter by nearest instead of linear
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    //framebuffer type, what we're attaching (could be color, we want depth), which texture (2D), the texture, mipmap
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    //because our framebuffer keeps track of depth as float values, we don't need to draw or read colors so explicitly set none
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    //unbind
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //Set uniforms to shaders to use
+    shader.use();
+    //is the only and first sampler2d so 0
+    shader.setInt("shadowMap", 0);      //will have to change accordingly when merging with main and textures
+    depthShader.use();
+    depthShader.setInt("depthMap", 0);  //should be fine
+
+    /*==================================================
+        Shadow setup done
+    ==================================================*/
+
     //hide mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -756,7 +802,45 @@ int main(int argc, char*argv[])
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        //Render from the light source's position to generate depth map which will be used to draw shadows
+        // 1. render depth of scene to texture (from light's perspective)
+        // --------------------------------------------------------------
+        glm::mat4 lightProjection, lightView;
+        //the light space matrix transforms coordinates into their position from the light sources point of view
+        glm::mat4 lightSpaceMatrix;
+        //set orthogonal view to be about as large as the ground
+        float near_plane = 1.0f, far_plane = 50.0f;
+        lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
+        // we are at where the light is, looking down at the origin of the world
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        // render scene from light's point of view
+        depthShader.use();
+        //put it in a uniform for the depth shader to use to generate shadow map
+        //only 1 matrix not an array so pass 1, and GL_FALSE because we are not transposing the matrix
+        glUniformMatrix4fv(glGetUniformLocation(depthShader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
+
+        //prepare to render from the light's view
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        //Draw the world with the shadow depth shader
+        draw(depthShader, vao);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // reset viewport
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        //draw as normal but using the depth map to add shadow
         // Draw geometry
+        // set light uniforms
+        //shader.setVec3("viewPos", camera.Position);
+        glUniform3fv(glGetUniformLocation(shader.ID, "viewPos"), 1, &camera.position[0]);
+        //shader.setVec3("lightPos", lightPos);
+        glUniform3fv(glGetUniformLocation(shader.ID, "lightPos"), 1, &lightPos[0]);
+        //shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
         draw(shader, vao);
         
         // End Frame

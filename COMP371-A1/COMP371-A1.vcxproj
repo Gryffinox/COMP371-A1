@@ -29,8 +29,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShader.glsl" />
+    <None Include="FragmentShaderDepth.glsl" />
     <None Include="FragmentShaderLight.glsl" />
     <None Include="vertexShader.glsl" />
+    <None Include="VertexShaderDepth.glsl" />
     <None Include="VertexShaderLight.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
