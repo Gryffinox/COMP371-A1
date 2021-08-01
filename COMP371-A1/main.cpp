@@ -631,6 +631,7 @@ int main(int argc, char*argv[])
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
     depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
     //set light position
+    shader.use();
     glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
     
     //set camera position
