@@ -40,6 +40,7 @@ void drawLight(int worldLoc);
 float scale = 1.0f;
 glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
 glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
+glm::vec3 modelRotationsWoutWall = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
 
@@ -369,12 +370,12 @@ void getInput(GLFWwindow *window, float deltaTime)
     
     //Move Model and rotate model
     //=====================================================================
-    //u -- move model left
+    //h -- move model left
     if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
     {
         modelTranslation.x += (deltaTime * modelMoveSpeedMult);
     }
-    //l -- move model right
+    //k -- move model right
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
     {
         modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
@@ -383,19 +384,71 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
     {
         modelTranslation.z += (deltaTime * modelMoveSpeedMult);
-    }  
-    //k -- move model down (backward)
+    }
+    //j -- move model down (backward)
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
         modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
     }
-    //y -- rotate model
+    //y -- rotate model counter clockwise
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
         modelRotations.y += deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
     }
-    //i -- rotate model
+    //i -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
         modelRotations.y -= deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+    }
+    //shift+u -- rotate model counter clockwise                                                                     //NEW CODE FOR ROTATING MODELS
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotations.x -= deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.x -= deltaTime * modelRotationSpeedMult;
+        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+    }
+    //shift+j -- rotate model clockwise
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotations.x += deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.x += deltaTime * modelRotationSpeedMult;
+        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+    }
+    //shift+h -- rotate model counter clockwise
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotations.z += deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.z += deltaTime * modelRotationSpeedMult;
+        modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
+    }
+    //shift+k -- rotate model clockwise
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotations.z -= deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.z -= deltaTime * modelRotationSpeedMult;
+        modelTranslation.x += (deltaTime * modelMoveSpeedMult);
+    }
+    //up -- rotate model counter clockwise
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        modelRotationsWoutWall.x -= deltaTime * modelRotationSpeedMult;
+    }
+    //down -- rotate model clockwise
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        modelRotationsWoutWall.x += deltaTime * modelRotationSpeedMult;
+    }
+    //left -- rotate model counter clockwise
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
+    }
+    //right -- rotate model clockwise
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+    }
+    //shift+left -- rotate model counter clockwise
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotationsWoutWall.z += deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+    }
+    //shift+right -- rotate model clockwise
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        modelRotationsWoutWall.z -= deltaTime * modelRotationSpeedMult;
+        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
     }
     //TFPL for selecting render mode
     //=====================================================================
@@ -518,45 +571,45 @@ void drawModels(int worldLoc)
     switch (modelToDisplay) {
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations
-        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotationsWoutWall);
         /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
         Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
         Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
         break;
     case 2:
-        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
+        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotationsWoutWall);
         /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
         Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
         Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
         break;
     case 3:
-        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
+        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotationsWoutWall);
         /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
         Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
         Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
         break;
     case 4:
-        Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
+        Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotationsWoutWall);
         /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
         Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
         Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
         break;
     case 5:
-        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
+        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotationsWoutWall);
         /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
         Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
         Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
         break;
     default:
-        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+        Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotationsWoutWall);
         Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+        Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotationsWoutWall);
         Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
-        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+        Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotationsWoutWall);
         Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
-        Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
+        Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotationsWoutWall);
         Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
-        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+        Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotationsWoutWall);
         Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
 
         break;
