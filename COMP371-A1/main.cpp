@@ -1,5 +1,5 @@
 //
-// COMP 371 Assignment 1 team LastMinuteFormed
+// COMP 371 Assignment 2 team LastMinuteFormed
 //
 // Built on in-class Lab Framework
 //
@@ -103,6 +103,7 @@ bool glowing = true;
 bool firstX;
 bool firstG;
 
+//texture variables type
 enum Texture
 {
     BRICK,
@@ -390,8 +391,7 @@ int createVertexArrayObject()
     glBindVertexArray(0);
     
     // load and create a texture
-    // texture 1
-    // ---------
+    // texture 1 wall texture
     glGenTextures(1, &brickTexture);
     glBindTexture(GL_TEXTURE_2D, brickTexture);
     // set the texture wrapping parameters
@@ -414,8 +414,7 @@ int createVertexArrayObject()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-    // texture 2
-    // ---------
+    // texture 2 model texture
     glGenTextures(1, &metalTexture);
     glBindTexture(GL_TEXTURE_2D, metalTexture);
     // load image, create texture and generate mipmaps
@@ -430,8 +429,7 @@ int createVertexArrayObject()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-    // texture 3
-    // ---------
+    // texture 3 glowing effect
     glGenTextures(1, &emissionMap);
     glBindTexture(GL_TEXTURE_2D, emissionMap);
     // load image, create texture and generate mipmaps
@@ -447,8 +445,7 @@ int createVertexArrayObject()
     }
     stbi_image_free(data);
     
-    // texture 4
-    // ---------
+    // texture 4 ground texture
     glGenTextures(1, &tileTexture);
     glBindTexture(GL_TEXTURE_2D, tileTexture);
     // load image, create texture and generate mipmaps
@@ -655,6 +652,7 @@ void getInput(GLFWwindow *window, float deltaTime)
         camera.firstLeftMouse = true;
     }
 
+    // Turns the texture off by changing variable textured from the set texture
     if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
     {
         if (firstX)
@@ -667,6 +665,8 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         firstX = true;
     }
+
+    // Turns the glowing off by changing variable textured from the set texture
     if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
     {
         if (firstG)
@@ -679,8 +679,19 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         firstG = true;
     }
+//u -- move model up (forward)
+if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+{
+    modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+}
+//k -- move model down (backward)
+if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+{
+    modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+}
 }
 
+// set Texture and changing it depending on input
 void setTexture()
 {
     shader.use();
@@ -789,34 +800,44 @@ void drawModels(int worldLoc)
 {
     switch (modelToDisplay) {
         case 1:
+            setTexture(METAL);
             //parameters: world location as int, vertex array offset, s t r transformations
             Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
             /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
              Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
+            setTexture(BRICK);
             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
             break;
         case 2:
+            setTexture(METAL);
             Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
             /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
              Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
+            setTexture(BRICK);
             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
             break;
         case 3:
+            setTexture(METAL);
             Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
             /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
              Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
+            setTexture(BRICK);
             Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
             break;
         case 4:
+            setTexture(METAL);
             Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
             /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
              Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
+            setTexture(BRICK);
             Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
             break;
         case 5:
+            setTexture(METAL);
             Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
             /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
              Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
+            setTexture(BRICK);
             Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
             break;
         default:
