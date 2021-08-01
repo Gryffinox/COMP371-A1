@@ -758,7 +758,6 @@ void draw(Shader shader, int vao)
     glBindVertexArray(vao);
     
     GLuint worldMatrixLocation = shader.getUniform("worldMatrix");
-    setTexture(NONE);
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
@@ -787,6 +786,7 @@ void drawGround(int worldLoc)
 //Draw axes crosshairs (RGB axes)
 void drawCrosshairs(int worldLoc)
 {
+    setTexture(NONE);
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(5.f, 5.f, 5.f));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, 0.0f));
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
