@@ -50,24 +50,34 @@ glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 modelRotationsWoutWall = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
+//position offsets when ALL in focus
+glm::vec3 positionOffset[] =
+{
+    glm::vec3{0.0f, 0.0f, 0.0f},
+    glm::vec3{40.0f, 0.0f, 0.0f},
+    glm::vec3{-40.0f, 0.0f, 0.0f},
+    glm::vec3{0.0f, 0.0f, 40.0f},
+    glm::vec3{0.0f, 0.0f, -40.0f}
+};
+
 //vertex start index and count variables
 //start indices
 int crosshairsIndex;
 int groundIndex;
 
-glm::vec3 color[]=
+glm::vec3 colorList[]=
 {
-    LIGHT_BLUE,
+    PURPLE_NAVY,
     YELLOW,
-    LIGHT_GREEN,
     DARK_ORANGE,
     FUSCHIA,
+    LIGHT_GREEN,
     WHITE
 };
 
 //coloredCube index dynamically set based on number of colors in color[]
-int numberOfColors = (sizeof(color)/sizeof(glm::vec3));
-int* coloredCubeIndex = new int[numberOfColors];
+int numberOfColors = (sizeof(colorList)/sizeof(glm::vec3));
+int* colorIndex = new int[numberOfColors];
 
 //counts
 int gvCount;
@@ -75,22 +85,24 @@ int chvCount;
 int cubevCount;
 
 //model variables
-int modelToDisplay = 0;
 int modelMoveSpeedMult = 2;
 
-Model Amanda;
-Model Calvin;
-Model Charles;
-Model Dante;
-Model Yeeho;
+enum Focus
+{
+    AMANDA,
+    CALVIN,
+    CHARLES,
+    DANTE,
+    YEEHO,
+    ALL
+};
+Focus focus = ALL;
+
+Model model[5];
+int numModels = 5;
+
 Camera camera;
 Shader shader;
-
-int* amandaColor = &coloredCubeIndex[0];
-int* calvinColor = &coloredCubeIndex[1];
-int* yeehoColor = &coloredCubeIndex[2];
-int* danteColor = &coloredCubeIndex[3];
-int* charlesColor = &coloredCubeIndex[4];
 
 //light variables
 int lightCubeIndex;
@@ -137,6 +149,7 @@ int createVertexArrayObject()
 {
     //vertices (with normal)
     float cubeVertices[] = {
+        //position           //norm vector
         -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
         0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
         0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,
@@ -325,12 +338,12 @@ int createVertexArrayObject()
     
     for (int kolor = 0; kolor < numberOfColors; kolor++)
     {
-        coloredCubeIndex[kolor] = 12 + 36 * kolor;
-        ioffset =  coloredCubeIndex[kolor] * numParameters;
+        colorIndex[kolor] = 12 + 36 * kolor;
+        ioffset =  colorIndex[kolor] * numParameters;
         
-        if(color[kolor] == WHITE)
+        if(colorList[kolor] == WHITE)
         {
-            lightCubeIndex = coloredCubeIndex[kolor];
+            lightCubeIndex = colorIndex[kolor];
         }
         
         j = 0;
@@ -347,7 +360,7 @@ int createVertexArrayObject()
                 //if location 2, set color
                 if(i%numParameters == 2)
                 {
-                    vertexArray[i + ioffset] = color[kolor];
+                    vertexArray[i + ioffset] = colorList[kolor];
                 } else
                 {
                     //if location 3, set texture coords
@@ -502,38 +515,38 @@ void getInput(GLFWwindow *window, float deltaTime)
     //=====================================================================
     if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
     {
-        modelToDisplay = 1;
+        focus = AMANDA;
         sceneReset();
     }
     
     if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
     {
-        modelToDisplay = 2;
+        focus = CALVIN;
         sceneReset();
     }
     
     if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
     {
-        modelToDisplay = 3;
+        focus = CHARLES;
         sceneReset();
     }
     
     if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
     {
-        modelToDisplay = 4;
+        focus = DANTE;
         sceneReset();
     }
     
     if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
     {
-        modelToDisplay = 5;
+        focus = YEEHO;
         sceneReset();
     }
     //home key to reset everything
     if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS) {
         //reset camera position to position 1
         //reset model variables to draw all of them
-        modelToDisplay = 0;     //default case anything not 1-5
+        focus = ALL;     //default case anything not 1-5
         camera.reset();
         sceneReset();
     }
@@ -689,11 +702,17 @@ void getInput(GLFWwindow *window, float deltaTime)
     //=====================================================================
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
-        Amanda.shuffle(deltaTime);
-        Calvin.shuffle(deltaTime);
-        Charles.shuffle(deltaTime);
-        Dante.shuffle(deltaTime);
-        Yeeho.shuffle(deltaTime);
+        if(focus != ALL)
+        {
+            model[focus].shuffle(deltaTime);
+        } else
+        {
+            for (int i = 0; i< numModels; i++)
+            {
+                model[i].shuffle(deltaTime);
+            }
+        }
+        
     }
 
     //shadow toggle
@@ -925,65 +944,22 @@ void drawModels(int worldLoc, Shader aShader)
         glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.z), glm::vec3(.0f, .0f, 1.f)
         );
     glUniformMatrix4fv(shader.getUniform("rotationMatrix"), 1, GL_FALSE, &rotationMatrix[0][0]);
-    switch (modelToDisplay) {
-        case 1:
+    if(focus != ALL)
+    {
+        //parameters: world location as int, vertex array offset, s t r transformations
+        setTexture(METAL, aShader);
+        model[focus].draw(worldLoc, colorIndex[focus], scale, modelTranslation, modelRotations);
+        setTexture(BRICK, aShader);
+        model[focus].drawWall(worldLoc, colorIndex[focus], scale, modelTranslation, modelRotations, model[focus].zAxis);
+    } else
+    {
+        for (int i = 0; i< numModels; i++)
+        {
             setTexture(METAL, aShader);
-            //parameters: world location as int, vertex array offset, s t r transformations
-            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
-            /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
-             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
+            model[i].draw(worldLoc, colorIndex[i], scale, modelTranslation + positionOffset[i], modelRotations);
             setTexture(BRICK, aShader);
-            Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-            break;
-        case 2:
-            setTexture(METAL, aShader);
-            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
-            /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
-             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
-            setTexture(BRICK, aShader);
-            Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
-            break;
-        case 3:
-            setTexture(METAL, aShader);
-            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
-            /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
-             Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
-            setTexture(BRICK, aShader);
-            Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
-            break;
-        case 4:
-            setTexture(METAL, aShader);
-            Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
-            /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
-             Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
-            setTexture(BRICK, aShader);
-            Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
-            break;
-        case 5:
-            setTexture(METAL, aShader);
-            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
-            /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
-             Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
-            setTexture(BRICK, aShader);
-            Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
-            break;
-        default:
-            setTexture(METAL, aShader);
-            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
-            
-            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
-            
-            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
-            
-            Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
-            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
-            setTexture(BRICK, aShader);
-            Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
-            Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
-            Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
-            Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations, Dante.zAxis);
-            Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations, Yeeho.zAxis);
-            break;
+            model[i].drawWall(worldLoc, colorIndex[i], scale, modelTranslation + positionOffset[i], modelRotations, model[focus].zAxis);
+        }
     }
 }
 
@@ -1095,11 +1071,11 @@ int main(int argc, char*argv[])
     camera = Camera(&shader, &lightShader, DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
 
     //set models
-    Amanda = Model("amanda.md");
-    Calvin = Model("calvin.md");
-    Charles = Model("charles.md");
-    Dante = Model("dante.md");
-    Yeeho = Model("yeeho.md");
+    model[AMANDA] = Model("amanda.md");
+    model[CALVIN] = Model("calvin.md");
+    model[CHARLES] = Model("charles.md");
+    model[DANTE] = Model("dante.md");
+    model[YEEHO] = Model("yeeho.md");
     
     /*==================================================
         Shadow Setup
