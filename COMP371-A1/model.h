@@ -1,4 +1,4 @@
-//  COMP 371 Assignment 1 team Last Minute Formed
+//  COMP 371 Assignment 2 team Last Minute Formed
 
 #ifndef Model_h
 #define Model_h
