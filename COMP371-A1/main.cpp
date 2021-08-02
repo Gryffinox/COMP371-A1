@@ -472,13 +472,13 @@ void getInput(GLFWwindow *window, float deltaTime)
 }
 
 //Draw everything calls other draw functions
-void draw(Shader shader, int vao)
+void draw(Shader aShader, int vao)
 {
-    shader.use();
+    aShader.use();
     //bind main VAO containing all models and grid
     glBindVertexArray(vao);
     
-    GLuint worldMatrixLocation = shader.getUniform("worldMatrix");
+    GLuint worldMatrixLocation = aShader.getUniform("worldMatrix");
     
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
@@ -597,10 +597,10 @@ void renderQuad() {
     if (quadVAO == 0) {
         float quadVertices[] = {
             // positions        // texture Coords
-            -.5f,  .5f, 0.0f, 0.0f, 1.0f,
-            -.5f, -.5f, 0.0f, 0.0f, 0.0f,
-             .5f,  .5f, 0.0f, 1.0f, 1.0f,
-             .5f, -.5f, 0.0f, 1.0f, 0.0f,
+            1.f,  2.f, 0.0f, 0.0f, 1.0f,
+            1.f,  1.f, 0.0f, 0.0f, 0.0f,
+            2.f,  2.f, 0.0f, 1.0f, 1.0f,
+            2.f,  1.f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
         glGenVertexArrays(1, &quadVAO);
@@ -846,11 +846,12 @@ int main(int argc, char*argv[])
         //the light space matrix transforms coordinates into their position from the light sources point of view
         glm::mat4 lightSpaceMatrix;
         //set orthogonal view to be about as large as the ground
-        float near_plane = .1f, far_plane = 200.0f;
+        float near_plane = 0.1f, far_plane = 100.0f;
         lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
         // we are at where the light is, looking down at the origin of the world
-        lightView = glm::lookAt(glm::vec3(.0f, 10.0f, .0f), glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightView = glm::lookAt(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0, 0.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
+        //lightSpaceMatrix = glm::mat4(1.0f);
         // render scene from light's point of view
         depthShader.use();
         //put it in a uniform for the depth shader to use to generate shadow map
