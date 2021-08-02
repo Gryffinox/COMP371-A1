@@ -1,6 +1,5 @@
 //
 // COMP 371 PrOJeCt asSiGnMenT by team LastMinuteFormed
-// COMP 371 Assignment 2 team LastMinuteFormed
 //
 // Built on in-class Lab Framework
 // And built on ressources from https://learnopengl.com
@@ -459,9 +458,8 @@ void getInput(GLFWwindow *window, float deltaTime)
         for (int i = 0; i <numModels; i++)
             model[i].moveForward(deltaTime * modelMoveSpeedMult);
     }
-    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
-        firstZero = true;
-        firstNine = true;
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_RELEASE) {
+        firstNine = true;;
     }
     //0
     if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
@@ -681,7 +679,7 @@ int main(int argc, char*argv[])
     
     // Create Window and rendering context using GLFW
     //Resolution 1024 x 768
-    GLFWwindow* window = glfwCreateWindow(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, "Comp371 - Assignment", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, "Comp371 Project", NULL, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
