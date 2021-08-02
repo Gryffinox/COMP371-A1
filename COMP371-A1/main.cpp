@@ -797,7 +797,7 @@ void getInput(GLFWwindow *window, float deltaTime)
     if (isMovingForward) {
         modelTranslation.z += (deltaTime * modelMoveSpeedMult);
     }
-    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_RELEASE) {
         firstNine = true;;
     }
     //0

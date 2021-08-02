@@ -48,7 +48,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main()
 {
         // ambient
-        float ambientStrength = 0.4;
+        float ambientStrength = 0.1;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -58,7 +58,7 @@ void main()
         vec3 diffuse = diff * lightColor;
         
         // specular
-        float specularStrength = 0.4;
+        float specularStrength = 0.1;
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
