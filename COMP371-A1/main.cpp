@@ -32,15 +32,13 @@ const float DEFAULT_SCR_HEIGHT = 768.0f;
 float screenWidth = DEFAULT_SCR_WIDTH;
 float screenHeight = DEFAULT_SCR_HEIGHT;
 
-const float modelRotationSpeedMult = 10.0;
-
 unsigned int renderMode = GL_FILL;
 
 float deltaTime = 0.0f;    // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 void drawGround(int worldLoc, Shader aShader);
-void drawCrosshairs(int worldLoc, Shader aShader);
+void drawCrosshairs(int worldLoc);
 void drawModels(Shader aShader);
 void drawLight(int worldLoc);
 
@@ -85,6 +83,7 @@ int cubevCount;
 
 //model variables
 int modelMoveSpeedMult = 2;
+const float modelRotationSpeedMult = 10.0;
 
 enum Focus
 {
@@ -109,29 +108,16 @@ int lightCubeIndex;
 glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
 
-
 //shadow variables
 Shader depthShader;
 bool drawShadows;
-bool firstB = true;
-
-bool firstM = true;
-bool cursorEnabled = false;
 
 // texture variables
 unsigned int brickTexture, metalTexture, emissionMap, tileTexture;
 bool textured = true;
 bool glowing = true;
-
-// input variable
-bool firstX;
-bool firstG;
-
-//continuous
-bool isMovingForward = false;
-bool isMovingBackward = false;
-bool firstZero = true;
-bool firstNine = true;
+float glowIntensity = 1;
+bool glowIncreasing = false;
 
 //texture variables type
 enum Texture
@@ -142,8 +128,17 @@ enum Texture
     NONE
 };
 
-float glowIntensity = 1;
-bool glowIncreasing = false;
+// input variable
+bool firstX;
+bool firstG;
+bool firstB = true;
+bool firstM = true;
+bool cursorEnabled = false;
+//continuous movement
+bool isMovingForward = false;
+bool isMovingBackward = false;
+bool firstZero = true;
+bool firstNine = true;
 
 int createVertexArrayObject()
 {
@@ -946,7 +941,7 @@ void draw(Shader aShader, int vao)
     GLuint worldMatrixLocation = aShader.getUniform("worldMatrix");
     
     drawGround(worldMatrixLocation, aShader);
-    drawCrosshairs(worldMatrixLocation, aShader);
+    drawCrosshairs(lightShader.getUniform("worldMatrix"));
     drawModels(aShader);
     
     drawLight(lightShader.getUniform("worldMatrix"));
@@ -971,9 +966,10 @@ void drawGround(int worldLoc, Shader aShader)
 }
 
 //Draw axes crosshairs (RGB axes)
-void drawCrosshairs(int worldLoc, Shader aShader)
+void drawCrosshairs(int worldLoc)
 {
-    setTexture(NONE, aShader);
+    //setTexture(NONE, aShader);
+    lightShader.use();
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(5.f, 5.f, 5.f));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, 0.0f));
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
