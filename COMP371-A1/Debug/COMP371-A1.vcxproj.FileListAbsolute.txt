@@ -1,6 +1,0 @@
-C:\Users\calvi\Downloads\COMP 371\CleanA1\COMP371-A1\Debug\COMP371-A1.exe
-C:\Users\calvi\Downloads\COMP 371\CleanA1\COMP371-A1\Debug\COMP371-A1.pdb
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\Debug\COMP371-A1.pdb
-C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe
-C:\Users\Yee Ho\Documents\GitHub\COMP371-A1\COMP371-A1\Debug\COMP371-A1.pdb
