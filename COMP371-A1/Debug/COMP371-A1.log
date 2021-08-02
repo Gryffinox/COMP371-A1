@@ -10,9 +10,9 @@ C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(156,24): warning
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(169,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\model.h(182,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(466,27): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(610,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(610,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(798,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(831,37): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
-C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(831,26): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(644,54): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(644,43): warning C4244: 'argument': conversion from 'const float' to 'int', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(836,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(870,37): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
+C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\main.cpp(870,26): warning C4244: 'argument': conversion from 'const float' to 'GLsizei', possible loss of data
   COMP371-A1.vcxproj -> C:\Users\calvi\Downloads\COMP 371\COMP371-A1\COMP371-A1\Debug\COMP371-A1.exe
