@@ -23,7 +23,7 @@ void main()
    vertexColor = aColor;
    fragPos = vec3(worldMatrix * vec4(aPos, 1.0));
    normal = vec3(rotationMatrix * vec4(aNorm, 1.0));
-    textureCoords = aTexture;
+   textureCoords = aTexture;
    mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;
    FragPosLightSpace = lightSpaceMatrix * vec4(fragPos, 1.0);
    gl_Position =  modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);

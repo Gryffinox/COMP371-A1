@@ -39,9 +39,9 @@ unsigned int renderMode = GL_FILL;
 float deltaTime = 0.0f;    // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-void drawGround(int worldLoc);
-void drawCrosshairs(int worldLoc);
-void drawModels(int worldLoc);
+void drawGround(int worldLoc, Shader aShader);
+void drawCrosshairs(int worldLoc, Shader aShader);
+void drawModels(int worldLoc, Shader aShader);
 void drawLight(int worldLoc);
 
 float scale = 1.0f;
@@ -115,6 +115,12 @@ bool glowing = true;
 bool firstX;
 bool firstG;
 
+//continuous
+bool isMovingForward = false;
+bool isMovingBackward = false;
+bool firstZero = true;
+bool firstNine = true;
+
 //texture variables type
 enum Texture
 {
@@ -124,7 +130,6 @@ enum Texture
     NONE
 };
 
-Texture selectedTexture = NONE;
 float glowIntensity = 1;
 bool glowIncreasing = false;
 
@@ -729,6 +734,7 @@ void getInput(GLFWwindow *window, float deltaTime)
         camera.firstLeftMouse = true;
     }
     
+    //cursor
     if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
     {
         if(firstM)
@@ -777,12 +783,44 @@ void getInput(GLFWwindow *window, float deltaTime)
     {
         firstG = true;
     }
+
+    //continuous movement
+    //9
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
+        isMovingBackward = false;
+        if (firstNine) {
+            firstNine = false;
+            isMovingForward = !isMovingForward;
+        }
+        //modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+    }
+    if (isMovingForward) {
+        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+    }
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
+        firstNine = true;;
+    }
+    //0
+    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
+        isMovingForward = false;
+        if (firstZero) {
+            firstZero = false;
+            isMovingBackward = !isMovingBackward;
+        }
+        //modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+    }
+    if (isMovingBackward) {
+        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+    }
+    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_RELEASE) {
+        firstZero = true;
+    }
 }
 
 // set Texture and changing it depending on input
-void setTexture()
+void setTexture(Texture text, Shader aShader)
 {
-    shader.use();
+    aShader.use();
     if(glowIncreasing)
     {
         glowIntensity += 0.2 * deltaTime;
@@ -793,13 +831,13 @@ void setTexture()
         glowIncreasing = false;
     if (glowIntensity <= 0.4)
         glowIncreasing = true;
-    switch(selectedTexture)
+    switch(text)
     {
         case BRICK:
-            shader.setBool("colorOn", !textured);
-            shader.setBool("textureOn", textured);
-            shader.setBool("glowOn", false);
-            shader.setInt("tex", 0);
+            aShader.setBool("colorOn", !textured);
+            aShader.setBool("textureOn", textured);
+            aShader.setBool("glowOn", false);
+            aShader.setInt("tex", 0);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, brickTexture);
             break;
@@ -808,34 +846,28 @@ void setTexture()
             glBindTexture(GL_TEXTURE_2D, metalTexture);
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, emissionMap);
-            shader.setBool("colorOn", true);
-            shader.setBool("textureOn", textured);
-            shader.setBool("glowOn", glowing);
-            shader.setFloat("intensity", glowIntensity);
-            shader.setInt("tex", 1);
-            shader.setInt("emissionMap", 2);
+            aShader.setBool("colorOn", true);
+            aShader.setBool("textureOn", textured);
+            aShader.setBool("glowOn", glowing);
+            aShader.setFloat("intensity", glowIntensity);
+            aShader.setInt("tex", 1);
+            aShader.setInt("emissionMap", 2);
             break;
         case TILE: 
-            shader.setBool("colorOn", !textured);
+            aShader.setBool("colorOn", !textured);
             glActiveTexture(GL_TEXTURE3);
             glBindTexture(GL_TEXTURE_2D, tileTexture);
-            shader.setBool("textureOn", textured);
-            shader.setBool("glowOn", false);
-            shader.setInt("tex", 3);
+            aShader.setBool("textureOn", textured);
+            aShader.setBool("glowOn", false);
+            aShader.setInt("tex", 3);
             
             break;
         case NONE:
-            shader.setBool("textureOn", false);
-            shader.setBool("glowOn", false);
+            aShader.setBool("textureOn", false);
+            aShader.setBool("glowOn", false);
+            aShader.setBool("colorOn", true);
             break;
     }
-}
-
-void setTexture(Texture text)
-{
-    
-    selectedTexture = text;
-    setTexture();
 }
 
 //Draw everything calls other draw functions
@@ -847,18 +879,18 @@ void draw(Shader aShader, int vao)
     
     GLuint worldMatrixLocation = aShader.getUniform("worldMatrix");
     
-    drawGround(worldMatrixLocation);
-    drawCrosshairs(worldMatrixLocation);
-    drawModels(worldMatrixLocation);
+    drawGround(worldMatrixLocation, aShader);
+    drawCrosshairs(worldMatrixLocation, aShader);
+    drawModels(worldMatrixLocation, aShader);
     
     drawLight(lightShader.getUniform("worldMatrix"));
     //drawLight(worldMatrixLocation);
 }
 
 //Draws the 100*100 grid
-void drawGround(int worldLoc)
+void drawGround(int worldLoc, Shader aShader)
 {
-    setTexture(TILE);
+    setTexture(TILE, aShader);
     for(int i = 0; i<100; i++)
     {
         for (int j = 0; j<100; j++)
@@ -873,9 +905,9 @@ void drawGround(int worldLoc)
 }
 
 //Draw axes crosshairs (RGB axes)
-void drawCrosshairs(int worldLoc)
+void drawCrosshairs(int worldLoc, Shader aShader)
 {
-    setTexture(NONE);
+    setTexture(NONE, aShader);
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(5.f, 5.f, 5.f));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, 0.0f));
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
@@ -885,7 +917,7 @@ void drawCrosshairs(int worldLoc)
 }
 
 //Draws the models
-void drawModels(int worldLoc)
+void drawModels(int worldLoc, Shader aShader)
 {
     glm::mat4 rotationMatrix =
         glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.x), glm::vec3(1.f, .0f, .0f)) *
@@ -895,48 +927,48 @@ void drawModels(int worldLoc)
     glUniformMatrix4fv(shader.getUniform("rotationMatrix"), 1, GL_FALSE, &rotationMatrix[0][0]);
     switch (modelToDisplay) {
         case 1:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             //parameters: world location as int, vertex array offset, s t r transformations
             Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
             /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
              Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
             break;
         case 2:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
             /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
              Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.zAxis);
             break;
         case 3:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
             /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
              Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.zAxis);
             break;
         case 4:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
             /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
              Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.zAxis);
             break;
         case 5:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
             /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
              Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.zAxis);
             break;
         default:
-            setTexture(METAL);
+            setTexture(METAL, aShader);
             Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
             
             Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
@@ -945,7 +977,7 @@ void drawModels(int worldLoc)
             
             Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
             Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
-            setTexture(BRICK);
+            setTexture(BRICK, aShader);
             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
             Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations, Charles.zAxis);
@@ -1195,7 +1227,7 @@ int main(int argc, char*argv[])
     //Set uniforms to shaders to use
     shader.use();
     //is the only and first sampler2d so 0
-    shader.setInt("shadowMap", 0);      //will have to change accordingly when merging with main and textures
+    shader.setInt("shadowMap", 4);      //will have to change accordingly when merging with main and textures
 
     drawShadows = true;
     shader.setBool("drawShadows", drawShadows);
@@ -1239,10 +1271,10 @@ int main(int argc, char*argv[])
         //the light space matrix transforms coordinates into their position from the light sources point of view
         glm::mat4 lightSpaceMatrix;
         //set orthogonal view to be about as large as the ground
-        float near_plane = 0.1f, far_plane = 100.0f;
-        lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+        float near_plane = 0.1f, far_plane = 50.0f;
+        lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
         // we are at where the light is, looking down at the origin of the world
-        lightView = glm::lookAt(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0, 0.0, 0.0));
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0, 0.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         //lightSpaceMatrix = glm::mat4(1.0f);
         // render scene from light's point of view
@@ -1268,7 +1300,7 @@ int main(int argc, char*argv[])
         //draw as normal but using the depth map to add shadow
         // Draw geometry
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, depthMap);
         draw(shader, vao);
 
