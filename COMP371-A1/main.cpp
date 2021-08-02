@@ -94,6 +94,9 @@ glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
 Shader lightShader;
 
+//shadow variables
+Shader depthShader;
+
 int createVertexArrayObject()
 {
     //vertices (with normal)
@@ -522,19 +525,20 @@ void getInput(GLFWwindow *window, float deltaTime)
 }
 
 //Draw everything calls other draw functions
-void draw(Shader shader, int vao)
+void draw(Shader aShader, int vao)
 {
-    shader.use();
+    aShader.use();
     //bind main VAO containing all models and grid
     glBindVertexArray(vao);
     
-    GLuint worldMatrixLocation = shader.getUniform("worldMatrix");
+    GLuint worldMatrixLocation = aShader.getUniform("worldMatrix");
     
     drawGround(worldMatrixLocation);
     drawCrosshairs(worldMatrixLocation);
     drawModels(worldMatrixLocation);
     
     drawLight(lightShader.getUniform("worldMatrix"));
+    //drawLight(worldMatrixLocation);
 
 }
 
@@ -624,7 +628,6 @@ void drawLight(int worldLoc)
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),lightPos);
     glm::mat4 worldMatrix =  translationMatrix * scalingMatrix ;
     glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
-    //TODO: replace magic numbers with constants
     glDrawArrays(GL_TRIANGLES, lightCubeIndex, 36);
        
 }
@@ -636,6 +639,40 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
+/*==================================================
+    Shadow debug
+    ==================================================*/
+
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad() {
+    if (quadVAO == 0) {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            1.f,  2.f, 0.0f, 0.0f, 1.0f,
+            1.f,  1.f, 0.0f, 0.0f, 0.0f,
+            2.f,  2.f, 0.0f, 1.0f, 1.0f,
+            2.f,  1.f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+/*==================================================
+Shadow debug
+==================================================*/
 
 
 int main(int argc, char*argv[])
@@ -679,7 +716,9 @@ int main(int argc, char*argv[])
     //initialize shaders
     shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
     lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
+    depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
     //set light position
+    shader.use();
     glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
     
     //set camera position
@@ -785,6 +824,51 @@ int main(int argc, char*argv[])
     size = sizeof(yeehoPts) / sizeof(glm::vec3);
     Yeeho = Model(yeehoPts, size);
     
+    /*==================================================
+        Shadow Setup
+    ==================================================*/
+    //Taken from https://learnopengl.com
+    // configure depth map FBO
+    // -----------------------
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;   //shadow texture resolution
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);                             //generate new framebuffer for our shadow depth map
+    // create depth texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    //Texture type, mipmap level, format to store texture as, size, size, deprecated, original texture format, original texture data type, the texture itself
+    //for a shadow texture, because we'll be generating it, we pass NULL.
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //Define texture behaviours - repeat over x-y axis, texel filter by nearest instead of linear
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    //framebuffer type, what we're attaching (could be color, we want depth), which texture (2D), the texture, mipmap
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    //because our framebuffer keeps track of depth as float values, we don't need to draw or read colors so explicitly set none
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    //unbind
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //Set uniforms to shaders to use
+    shader.use();
+    //is the only and first sampler2d so 0
+    shader.setInt("shadowMap", 0);      //will have to change accordingly when merging with main and textures
+
+    //debug
+    Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
+    debugDepthQuad.use();
+    debugDepthQuad.setInt("depthMap", 0);
+
+    /*==================================================
+        Shadow setup done
+    ==================================================*/
+
     //hide mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -801,7 +885,6 @@ int main(int argc, char*argv[])
     // Entering Main Loop
     while(!glfwWindowShouldClose(window))
     {
-        
         camera.updateCam();
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -809,8 +892,54 @@ int main(int argc, char*argv[])
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        //Render from the light source's position to generate depth map which will be used to draw shadows
+        // 1. render depth of scene to texture (from light's perspective)
+        // --------------------------------------------------------------
+        glm::mat4 lightProjection, lightView;
+        //the light space matrix transforms coordinates into their position from the light sources point of view
+        glm::mat4 lightSpaceMatrix;
+        //set orthogonal view to be about as large as the ground
+        float near_plane = 0.1f, far_plane = 100.0f;
+        lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+        // we are at where the light is, looking down at the origin of the world
+        lightView = glm::lookAt(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0, 0.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        //lightSpaceMatrix = glm::mat4(1.0f);
+        // render scene from light's point of view
+        depthShader.use();
+        //put it in a uniform for the depth shader to use to generate shadow map
+        //only 1 matrix not an array so pass 1, and GL_FALSE because we are not transposing the matrix
+        glUniformMatrix4fv(glGetUniformLocation(depthShader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
+
+        //prepare to render from the light's view
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        //Draw the world with the shadow depth shader
+        draw(depthShader, vao);
+        //draw(shader, vao);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // reset viewport
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shader.use();
+
+        //draw as normal but using the depth map to add shadow
         // Draw geometry
+        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
         draw(shader, vao);
+
+        // render Depth map to quad for visual debugging
+        // ---------------------------------------------
+        debugDepthQuad.use();
+        debugDepthQuad.setFloat("near_plane", near_plane);
+        debugDepthQuad.setFloat("far_plane", far_plane);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        renderQuad();
         
         // End Frame
         glfwSwapBuffers(window);

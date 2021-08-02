@@ -1,3 +1,4 @@
+//Shader class taken from https://learnopengl.com
 //  COMP 371 Assignment 1 team Last Minute Formed
 
 #ifndef shader_h
