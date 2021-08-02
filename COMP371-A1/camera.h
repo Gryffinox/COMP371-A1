@@ -41,10 +41,14 @@ public:
     double lastMousePosX;
     double lastMousePosY;
     
+    //window size
+    float width;
+    float height;
+    
     //Default constructor
     Camera(){}
     
-    Camera(Shader* shader, Shader* lightShader)
+    Camera(Shader* shader, Shader* lightShader, float width, float height)
     {
         this->shader = shader;
         this->lightShader = lightShader;
@@ -66,6 +70,8 @@ public:
         firstRightMouse = true;
         lastMousePosX = 0;
         lastMousePosY = 0;
+        this->width = width;
+        this->height = height;
     }
     
     void moveLeft(float deltaTime)
@@ -175,7 +181,7 @@ public:
         glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
        
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(zoom),  // field of view in degrees
-                                                      1024.0f / 768.0f,      // aspect ratio
+                                                      width / height,      // aspect ratio
                                                       0.1f, 100.0f);       // near and far (near > 0)
         glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
         
@@ -204,6 +210,12 @@ public:
         yaw = -90.f;
         pitch = 0.0f;
         zoom = 75.0f;
+    }
+    
+    void setWH(float width, float height)
+    {
+        this->width = width;
+        this->height = height;
     }
 
 };
