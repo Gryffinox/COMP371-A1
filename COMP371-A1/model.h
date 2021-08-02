@@ -14,7 +14,13 @@ private:
 public:
     glm::vec3* positions;               //Recentered coordinates of the model array pointer
     glm::vec3* positionsDefault;        //Original coordinates of the model array pointer
-    glm::vec3 center;
+    
+    glm::vec3 center;                   //center of model, relative to all model cube coordinates
+    glm::vec3 modelTranslation;            //model position in world space
+    glm::vec3 modelRotation;            //model rotations in world space
+    glm::vec3 modelRotationWoutWall;    
+    float scale;
+    
     float front;
     int numCubes;
     bool unshuffle;                     //Determines if the model is currently moving towards the shuffled shape or the regular shape
@@ -33,7 +39,13 @@ public:
     Model() {
         positions = new glm::vec3;
         positionsDefault = new glm::vec3;
-        center = glm::vec3{ 0.0f, 0.0f, 0.0f };
+        
+        center = glm::vec3{0.0f, 0.0f, 0.0f };
+        modelTranslation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotationWoutWall= glm::vec3{0.0f, 0.0f, 0.0f };
+        scale = 1;
+        
         front = 0.0f;
         numCubes = 0;
         unshuffle = false;
@@ -56,13 +68,17 @@ public:
         positions = new glm::vec3[numCubes];
         positionsDefault = new glm::vec3[numCubes];
         
+        modelTranslation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotationWoutWall= glm::vec3{0.0f, 0.0f, 0.0f };
+        scale = 1;
+        
         setPositionArrays(originalModel);
     }
     
     Model(const char* filepath)
     {
-        //initialize all variables
-        unshuffle = false;
+        //read in file and count cubes
         std::string fileContent = "";
         std::ifstream modelFile;
         // ensure ifstream objects can throw exceptions:
@@ -86,11 +102,18 @@ public:
         size_t end;
         std::string token = fileContent;
         
+        //initialize all variables
+        unshuffle = false;
+        modelTranslation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotation= glm::vec3{0.0f, 0.0f, 0.0f };
+        modelRotationWoutWall= glm::vec3{0.0f, 0.0f, 0.0f };
+        scale = 1;
+        
         //Dynmically set array size for new model
         positions = new glm::vec3[numCubes];
         positionsDefault = new glm::vec3[numCubes];
         
-        //read position array in from file
+        //parse string from file to set positions
         glm::vec3* originalModel = new glm::vec3[numCubes];
         for (int i = 0; i <numCubes; i++)
         {
@@ -304,22 +327,61 @@ public:
         }
     }
     
+    void scaleUp(float scaleIncrease)
+    {
+        scale += scaleIncrease;
+    }
+    
+    void scaleDown(float scaleDecrease)
+    {
+        scale -= scaleDecrease;
+        if(scale<0)
+            scale = 0;
+    }
+    
+    void moveLeft(float speed)
+    {
+        modelTranslation.x += speed;
+    }
+    void moveRight(float speed)
+    {
+        modelTranslation.x -= speed;
+    }
+    void moveForward(float speed)
+    {
+        modelTranslation.z += speed;
+    }
+    void moveBackward(float speed)
+    {
+        modelTranslation.z -= speed;
+    }
+    
+    
     //Draw the model
     //Pass in each transformation as a set of coordinates except for scale which applies to all dimensions
-    void draw(int worldLoc, int startIndex, float scale, glm::vec3 coordinates, glm::vec3 angles)
+    void draw(Shader shader, int startIndex, glm::vec3 offset)
     {
+        int worldLoc = shader.getUniform("worldMatrix");
+        int rotationLoc = shader.getUniform("rotationMatrix");
+        
+        //all cubes share scaling, rotation and translation matrices
+        glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
+        glm::mat4 rotationMatrix =
+            glm::rotate(glm::mat4(1.0f), glm::radians(modelRotationWoutWall.x), glm::vec3(1.f, .0f, .0f)) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(modelRotationWoutWall.y), glm::vec3(.0f, 1.f, .0f)) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(modelRotationWoutWall.z), glm::vec3(.0f, .0f, 1.f)
+        );
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), modelTranslation + offset);
+        
+        //set rotation for norm -- once per draw call
+        //does not need to be set again for wall, assuming wall ALWAYS drawn WITH model.
+        glUniformMatrix4fv(rotationLoc, 1, GL_FALSE, &rotationMatrix[0][0]);
+    
         for(int i = 0; i<numCubes; i++)
         {
             //set each transformation matrix based on input variables
-            glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
-            //glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
             glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), scale * (positions[i]));
-            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
-            glm::mat4 rotationMatrix =
-            glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) *
-            glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
-            glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
-                        );
+            
             //Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
             glm::mat4 worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
             glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
@@ -328,8 +390,16 @@ public:
         
     }
     
+    void draw(Shader shader, int startIndex)
+    {
+        draw(shader, startIndex, glm::vec3(0,0,0));
+    }
+    
     //axis is 1, 2 or 3 matchin x y or z
-    void drawWall(int worldLoc, int startIndex, float scale, glm::vec3 coordinates, glm::vec3 angles, int axis) {
+    void drawWall(Shader shader, int startIndex, glm::vec3 offset, int axis) {
+        
+        int worldLoc = shader.getUniform("worldMatrix");
+        
         switch (axis) {
             case xAxis:
                 for (int i = 0; i < cubesWallX; i++) {
@@ -337,11 +407,11 @@ public:
                     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
                     //glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
                     glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), scale * (wallX[i]));
-                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
+                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), offset);
                     glm::mat4 rotationMatrix =
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.x), glm::vec3(1.f, .0f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.y), glm::vec3(.0f, 1.f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.z), glm::vec3(.0f, .0f, 1.f)
                                 );
                     //Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
                     glm::mat4 worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
@@ -355,11 +425,11 @@ public:
                     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
                     //glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
                     glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), scale * (wallY[i]));
-                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
+                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), offset);
                     glm::mat4 rotationMatrix =
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.x), glm::vec3(1.f, .0f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.y), glm::vec3(.0f, 1.f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.z), glm::vec3(.0f, .0f, 1.f)
                                 );
                     //Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
                     glm::mat4 worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
@@ -373,11 +443,11 @@ public:
                     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
                     //glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
                     glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), scale * (wallZ[i]));
-                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates);
+                    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), offset);
                     glm::mat4 rotationMatrix =
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.x), glm::vec3(1.f, .0f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.y), glm::vec3(.0f, 1.f, .0f)) *
-                    glm::rotate(glm::mat4(1.0f), glm::radians(angles.z), glm::vec3(.0f, .0f, 1.f)
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.x), glm::vec3(1.f, .0f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.y), glm::vec3(.0f, 1.f, .0f)) *
+                    glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.z), glm::vec3(.0f, .0f, 1.f)
                                 );
                     //Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
                     glm::mat4 worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
@@ -388,6 +458,9 @@ public:
             default:
                 break;
         }
+    }
+    void drawWall(Shader shader, int startIndex, int axis) {
+        drawWall( shader, startIndex, glm::vec3(0,0,0), axis);
     }
     
 };

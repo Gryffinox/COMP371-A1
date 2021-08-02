@@ -41,13 +41,9 @@ float lastFrame = 0.0f; // Time of last frame
 
 void drawGround(int worldLoc, Shader aShader);
 void drawCrosshairs(int worldLoc, Shader aShader);
-void drawModels(int worldLoc, Shader aShader);
+void drawModels(Shader aShader);
 void drawLight(int worldLoc);
 
-float scale = 1.0f;
-glm::vec3 modelTranslation = glm::vec3{0.0f, 0.0f, 0.0f};
-glm::vec3 modelRotations = glm::vec3{ 0.0f, 0.0f, 0.0f };
-glm::vec3 modelRotationsWoutWall = glm::vec3{ 0.0f, 0.0f, 0.0f };
 glm::vec3 rotationPoint = glm::vec3(0.0f, 0.0f, 0.0f);
 
 //position offsets when ALL in focus
@@ -65,13 +61,16 @@ glm::vec3 positionOffset[] =
 int crosshairsIndex;
 int groundIndex;
 
+// NOTE ---
+// first 5 colors correspond to the 5 model colors
+// --------
 glm::vec3 colorList[]=
 {
-    PURPLE_NAVY,
-    YELLOW,
-    DARK_ORANGE,
-    FUSCHIA,
-    LIGHT_GREEN,
+    PURPLE_NAVY, // Amanda color
+    YELLOW, // Calvin color
+    DARK_ORANGE, // Charles color
+    FUSCHIA, // Dante color
+    LIGHT_GREEN, //Yeeho color
     WHITE
 };
 
@@ -105,10 +104,11 @@ Camera camera;
 Shader shader;
 
 //light variables
+Shader lightShader;
 int lightCubeIndex;
 glm::vec3 lightPos = glm::vec3(0,30,0);
 float lightScale = 5;
-Shader lightShader;
+
 
 //shadow variables
 Shader depthShader;
@@ -497,9 +497,13 @@ int createVertexArrayObject()
 
 //Settings to reset whenever switching model (through controls 1-5 and Home)
 void sceneReset() {
-    scale = 1;
-    modelRotations = glm::vec3{ .0f, .0f, .0f };
-    modelTranslation = glm::vec3{ .0f, .0f, .0f };
+    for (int i = 0; i < numModels; i++)
+    {
+        model[i].scale = 1;
+        model[i].modelTranslation = glm::vec3{ .0f, .0f, .0f };
+        model[i].modelRotation = glm::vec3{ .0f, .0f, .0f };
+        model[i].modelRotationWoutWall = glm::vec3{ .0f, .0f, .0f };
+    }
 }
 
 /*=====================================================================
@@ -584,84 +588,124 @@ void getInput(GLFWwindow *window, float deltaTime)
     //Move Model and rotate model
     //=====================================================================
     //h -- move model left
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
     {
-        modelTranslation.x += (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+            model[i].moveLeft(deltaTime * modelMoveSpeedMult);
     }
     //k -- move model right
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
     {
-        modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+            model[i].moveRight(deltaTime * modelMoveSpeedMult);
     }
     //u -- move model up (forward)
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
     {
-        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+            model[i].moveForward(deltaTime * modelMoveSpeedMult);
     }
     //j -- move model down (backward)
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
     {
-        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+            model[i].moveBackward(deltaTime * modelMoveSpeedMult);
     }
     //y -- rotate model counter clockwise
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
-        modelRotations.y += deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.y += deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.y += deltaTime * modelRotationSpeedMult;
+        }
     }
     //i -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
-        modelRotations.y -= deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.y -= deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.y -= deltaTime * modelRotationSpeedMult;
+        }
     }
     //shift+u -- rotate model counter clockwise                                                                     //NEW CODE FOR ROTATING MODELS
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotations.x -= deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.x -= deltaTime * modelRotationSpeedMult;
-        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.x -= deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.x -= deltaTime * modelRotationSpeedMult;
+        }
+        //modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
     }
     //shift+j -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotations.x += deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.x += deltaTime * modelRotationSpeedMult;
-        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.x += deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.x += deltaTime * modelRotationSpeedMult;
+        }
+        //modelTranslation.z += (deltaTime * modelMoveSpeedMult);
     }
     //shift+h -- rotate model counter clockwise
     if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotations.z += deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.z += deltaTime * modelRotationSpeedMult;
-        modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.z += deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.z += deltaTime * modelRotationSpeedMult;
+        }
+        //modelTranslation.x -= (deltaTime * modelMoveSpeedMult);
     }
     //shift+k -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotations.z -= deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.z -= deltaTime * modelRotationSpeedMult;
-        modelTranslation.x += (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotation.y -= deltaTime * modelRotationSpeedMult;
+            model[i].modelRotationWoutWall.y -= deltaTime * modelRotationSpeedMult;
+        }
+        //modelTranslation.x += (deltaTime * modelMoveSpeedMult);
     }
     //up -- rotate model counter clockwise
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        modelRotationsWoutWall.x -= deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.x -= deltaTime * modelRotationSpeedMult;
+        }
     }
     //down -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        modelRotationsWoutWall.x += deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.x += deltaTime * modelRotationSpeedMult;
+        }
     }
     //left -- rotate model counter clockwise
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.y += deltaTime * modelRotationSpeedMult;
+        }
     }
     //right -- rotate model clockwise
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS) {
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.y -= deltaTime * modelRotationSpeedMult;
+        }
     }
     //shift+left -- rotate model counter clockwise
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotationsWoutWall.z += deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.z += deltaTime * modelRotationSpeedMult;
+        }
+      //  modelRotationsWoutWall.y -= deltaTime * modelRotationSpeedMult;
     }
     //shift+right -- rotate model clockwise
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        modelRotationsWoutWall.z -= deltaTime * modelRotationSpeedMult;
-        modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
+        for (int i = 0; i<numModels; i++)
+        {
+            model[i].modelRotationWoutWall.z -= deltaTime * modelRotationSpeedMult;
+        }
+        //modelRotationsWoutWall.y += deltaTime * modelRotationSpeedMult;
     }
     //TFPL for selecting render mode
     //=====================================================================
@@ -687,15 +731,14 @@ void getInput(GLFWwindow *window, float deltaTime)
     //=====================================================================
     //press + -- scale-up
     if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-        scale += deltaTime;
+        for (int i = 0; i < numModels; i++)
+            model[i].scaleUp(deltaTime);
     }
     
     //press - -- scale-down
     if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-        scale -= deltaTime;
-        if (scale < 0) {
-            scale = 0;
-        }
+        for (int i = 0; i < numModels; i++)
+            model[i].scaleDown(deltaTime);
     }
     
     //shuffle
@@ -814,10 +857,12 @@ void getInput(GLFWwindow *window, float deltaTime)
         //modelTranslation.z += (deltaTime * modelMoveSpeedMult);
     }
     if (isMovingForward) {
-        modelTranslation.z += (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i <numModels; i++)
+            model[i].moveForward(deltaTime * modelMoveSpeedMult);
     }
     if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
-        firstNine = true;;
+        firstZero = true;
+        firstNine = true;
     }
     //0
     if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
@@ -829,10 +874,12 @@ void getInput(GLFWwindow *window, float deltaTime)
         //modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
     }
     if (isMovingBackward) {
-        modelTranslation.z -= (deltaTime * modelMoveSpeedMult);
+        for (int i = 0; i <numModels; i++)
+            model[i].moveBackward(deltaTime * modelMoveSpeedMult);
     }
     if (glfwGetKey(window, GLFW_KEY_0) == GLFW_RELEASE) {
         firstZero = true;
+        firstNine = true;
     }
 }
 
@@ -900,7 +947,7 @@ void draw(Shader aShader, int vao)
     
     drawGround(worldMatrixLocation, aShader);
     drawCrosshairs(worldMatrixLocation, aShader);
-    drawModels(worldMatrixLocation, aShader);
+    drawModels(aShader);
     
     drawLight(lightShader.getUniform("worldMatrix"));
     //drawLight(worldMatrixLocation);
@@ -936,29 +983,23 @@ void drawCrosshairs(int worldLoc, Shader aShader)
 }
 
 //Draws the models
-void drawModels(int worldLoc, Shader aShader)
+void drawModels(Shader aShader)
 {
-    glm::mat4 rotationMatrix =
-        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.x), glm::vec3(1.f, .0f, .0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.y), glm::vec3(.0f, 1.f, .0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.z), glm::vec3(.0f, .0f, 1.f)
-        );
-    glUniformMatrix4fv(shader.getUniform("rotationMatrix"), 1, GL_FALSE, &rotationMatrix[0][0]);
     if(focus != ALL)
     {
         //parameters: world location as int, vertex array offset, s t r transformations
         setTexture(METAL, aShader);
-        model[focus].draw(worldLoc, colorIndex[focus], scale, modelTranslation, modelRotations);
+        model[focus].draw(aShader, colorIndex[focus]);
         setTexture(BRICK, aShader);
-        model[focus].drawWall(worldLoc, colorIndex[focus], scale, modelTranslation, modelRotations, model[focus].zAxis);
+        model[focus].drawWall(aShader, colorIndex[focus], model[focus].zAxis);
     } else
     {
         for (int i = 0; i< numModels; i++)
         {
             setTexture(METAL, aShader);
-            model[i].draw(worldLoc, colorIndex[i], scale, modelTranslation + positionOffset[i], modelRotations);
+            model[i].draw(aShader, colorIndex[i], positionOffset[i]);
             setTexture(BRICK, aShader);
-            model[i].drawWall(worldLoc, colorIndex[i], scale, modelTranslation + positionOffset[i], modelRotations, model[focus].zAxis);
+            model[i].drawWall(aShader, colorIndex[i], positionOffset[i], model[focus].zAxis);
         }
     }
 }
