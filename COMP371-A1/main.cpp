@@ -69,7 +69,6 @@ int gvCount;
 int chvCount;
 int cubevCount;
 
-
 //model variables
 int modelToDisplay = 0;
 int modelMoveSpeedMult = 2;
@@ -96,6 +95,8 @@ Shader lightShader;
 
 //shadow variables
 Shader depthShader;
+bool drawShadows;
+bool firstB = true;
 
 bool firstM = true;
 bool cursorEnabled = false;
@@ -501,6 +502,20 @@ void getInput(GLFWwindow *window, float deltaTime)
         Dante.shuffle(deltaTime);
         Yeeho.shuffle(deltaTime);
     }
+
+    //shadow toggle
+    //=====================================================================
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+        if (firstB) {
+            drawShadows = !drawShadows;
+            firstB = false;
+        }
+        shader.use();
+        shader.setBool("drawShadows", drawShadows);
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE) {
+        firstB = true;
+    }
     
     //right mouse -- pan camera in any direction
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {   
@@ -674,10 +689,10 @@ void renderQuad() {
     if (quadVAO == 0) {
         float quadVertices[] = {
             // positions        // texture Coords
-            1.f,  2.f, 0.0f, 0.0f, 1.0f,
-            1.f,  1.f, 0.0f, 0.0f, 0.0f,
-            2.f,  2.f, 0.0f, 1.0f, 1.0f,
-            2.f,  1.f, 0.0f, 1.0f, 0.0f,
+            0.f,  1.f, 0.0f, 0.0f, 1.0f,
+            0.f,  0.f, 0.0f, 0.0f, 0.0f,
+            1.f,  1.f, 0.0f, 1.0f, 1.0f,
+            1.f,  0.f, 0.0f, 1.0f, 0.0f,
         };
         // setup plane VAO
         glGenVertexArrays(1, &quadVAO);
@@ -884,6 +899,9 @@ int main(int argc, char*argv[])
     //is the only and first sampler2d so 0
     shader.setInt("shadowMap", 0);      //will have to change accordingly when merging with main and textures
 
+    drawShadows = true;
+    shader.setBool("drawShadows", drawShadows);
+
     //debug
     Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
     debugDepthQuad.use();
@@ -958,12 +976,12 @@ int main(int argc, char*argv[])
 
         // render Depth map to quad for visual debugging
         // ---------------------------------------------
-        debugDepthQuad.use();
+        /*debugDepthQuad.use();
         debugDepthQuad.setFloat("near_plane", near_plane);
         debugDepthQuad.setFloat("far_plane", far_plane);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        renderQuad();
+        renderQuad();*/
         
         // End Frame
         glfwSwapBuffers(window);
