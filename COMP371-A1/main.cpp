@@ -1,7 +1,8 @@
 //
-// COMP 371 Assignment 1 team LastMinuteFormed
+// COMP 371 PrOJeCt asSiGnMenT by team LastMinuteFormed
 //
 // Built on in-class Lab Framework
+// And built on ressources from https://learnopengl.com
 //
 
 #include <iostream>
@@ -610,6 +611,12 @@ void drawCrosshairs(int worldLoc)
 //Draws the models
 void drawModels(int worldLoc)
 {
+    glm::mat4 rotationMatrix =
+        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.x), glm::vec3(1.f, .0f, .0f)) *
+        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.y), glm::vec3(.0f, 1.f, .0f)) *
+        glm::rotate(glm::mat4(1.0f), glm::radians(modelRotations.z), glm::vec3(.0f, .0f, 1.f)
+        );
+    glUniformMatrix4fv(shader.getUniform("rotationMatrix"), 1, GL_FALSE, &rotationMatrix[0][0]);
     switch (modelToDisplay) {
     case 1:
         //parameters: world location as int, vertex array offset, s t r transformations

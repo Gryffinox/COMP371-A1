@@ -25,7 +25,10 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // check whether current frag pos is in shadow - adjust for peter panning
-    float shadow = currentDepth - 0.05 > closestDepth  ? 1.0 : 0.0;
+    vec3 norm = normalize(normal);
+    vec3 lightDir = normalize(lightPos - fragPos);
+    float bias = max(0.1 * (1.0 - dot(norm, lightDir)), 0.01);
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
     return shadow;
 }
@@ -33,7 +36,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main()
 {
         // ambient
-        float ambientStrength = 0.2;
+        float ambientStrength = 0.4;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -43,7 +46,7 @@ void main()
         vec3 diffuse = diff * lightColor;
         
         // specular
-        float specularStrength = 0.3;
+        float specularStrength = 0.4;
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
