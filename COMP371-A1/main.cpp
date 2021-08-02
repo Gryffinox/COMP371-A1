@@ -476,7 +476,6 @@ void getInput(GLFWwindow *window, float deltaTime)
     }
     if (glfwGetKey(window, GLFW_KEY_0) == GLFW_RELEASE) {
         firstZero = true;
-        firstNine = true;
     }
 }
 
@@ -570,7 +569,6 @@ void drawGround(int worldLoc, Shader aShader)
 //Draw axes crosshairs (RGB axes)
 void drawCrosshairs(int worldLoc)
 {
-    //setTexture(NONE, aShader);
     lightShader.use();
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(5.f, 5.f, 5.f));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, 0.0f));
@@ -724,9 +722,9 @@ int main(int argc, char*argv[])
     // -----------------------
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;   //shadow texture resolution
     unsigned int depthMapFBO;
+    unsigned int depthMap;
     glGenFramebuffers(1, &depthMapFBO);                             //generate new framebuffer for our shadow depth map
     // create depth texture
-    unsigned int depthMap;
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
     //Texture type, mipmap level, format to store texture as, size, size, deprecated, original texture format, original texture data type, the texture itself
@@ -756,9 +754,9 @@ int main(int argc, char*argv[])
     shader.setBool("drawShadows", drawShadows);
 
     //debug
-    Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
+    /*Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
     debugDepthQuad.use();
-    debugDepthQuad.setInt("depthMap", 0);
+    debugDepthQuad.setInt("depthMap", 0);*/
 
     /*==================================================
         Shadow setup done
@@ -799,7 +797,6 @@ int main(int argc, char*argv[])
         // we are at where the light is, looking down at the origin of the world
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0, 0.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
-        //lightSpaceMatrix = glm::mat4(1.0f);
         // render scene from light's point of view
         depthShader.use();
         //put it in a uniform for the depth shader to use to generate shadow map

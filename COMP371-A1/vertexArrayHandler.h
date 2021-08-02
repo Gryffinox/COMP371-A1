@@ -337,7 +337,7 @@ int createVertexArrayObject()
     // load textures
     loadTexture("brick.jpg", &brickTexture);
     loadTexture("silver.jpg", &metalTexture);
-    loadTexture("glow-map01.jpg", &emissionMap);
+    loadTexture("glowMap-01.jpg", &emissionMap);
     loadTexture("tile.jpg", &tileTexture);
 
     return vertexArrayObject;
