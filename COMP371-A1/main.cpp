@@ -1094,104 +1094,12 @@ int main(int argc, char*argv[])
     //set camera position
     camera = Camera(&shader, &lightShader, DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
 
-    //TODO: get models from inputs
-    //Amanda
-    glm::vec3 amandaPts[] = {
-        glm::vec3(-1.f,  -1.f, -5.0f),
-        glm::vec3(-0.f,  -0.f, -4.0f),
-        glm::vec3(1.f,  1.f, -3.0f),
-        glm::vec3(2.f,  2.f, -2.f),
-        glm::vec3(2.f,  1.f, -1.f),
-        glm::vec3(2.f,  -0.f, 0.f),
-        glm::vec3(2.f,  -1.f, 1.f),
-        glm::vec3(1.f,  -0.f, 2.f),
-        glm::vec3(0.f,  1.f, 3.f),
-        glm::vec3(-1.f,  2.f, 4.f),
-    };
-    float size = sizeof(amandaPts) / sizeof(glm::vec3);
-    Amanda = Model(amandaPts, size);
-    //Calvin
-    glm::vec3 calvinPts[] = {
-        glm::vec3(0.0f, 0.0f, 3.0f),
-        glm::vec3(1.0f, 0.0f, 2.0f),
-        glm::vec3(-1.0f, 0.0f, 2.0f),
-        glm::vec3(1.0f, 0.0f, 1.0f),
-        glm::vec3(-1.0f, 0.0f, 1.0f),
-        glm::vec3(2.0f, 0.0f, 0.0f),
-        glm::vec3(-2.0f, 0.0f, 0.0f),
-        glm::vec3(1.0f, 1.0f, 0.0f),
-        glm::vec3(-1.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, -1.0f, 1.0f),
-        glm::vec3(0.0f, -1.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 2.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(-1.0f, -1.0f, 0.0f),
-        glm::vec3(-1.0f, 0.0f, -1.0f)
-    };
-    size = sizeof(calvinPts) / sizeof(glm::vec3);
-    Calvin = Model(calvinPts, size);
-    
-    //Charles
-    glm::vec3 charlesPts[] = {
-        glm::vec3(-3.0f,0.0f,0.0f),
-        glm::vec3(-2.0f,0.0f,0.0f),
-        glm::vec3(-1.0f,0.0f,0.0f),
-        glm::vec3(0.0f,0.0f,0.0f),
-        glm::vec3(1.0f,0.0f,0.0f),
-        glm::vec3(2.0f,0.0f,0.0f),
-        glm::vec3(3.0f,0.0f,0.0f),
-        glm::vec3(-3.0f,1.0f,0.0f),
-        glm::vec3(-2.0f,1.0f,0.0f),
-        glm::vec3(-1.0f,1.0f,0.0f),
-        glm::vec3(0.0f,1.0f,0.0f),
-        glm::vec3(1.0f,1.0f,0.0f),
-        glm::vec3(2.0f,1.0f,0.0f),
-        glm::vec3(3.0f,1.0f,0.0f),
-        glm::vec3(-2.0f,2.0f,0.0f),
-        glm::vec3(-1.0f,2.0f,0.0f),
-        glm::vec3(0.0f,2.0f,0.0f),
-        glm::vec3(1.0f,2.0f,0.0f),
-        glm::vec3(2.0f,2.0f,0.0f),
-        glm::vec3(-2.0f,-1.0f,0.0f),
-        glm::vec3(-1.0f,-1.0f,0.0f),
-        glm::vec3(0.0f,-1.0f,0.0f),
-        glm::vec3(1.0f,-1.0f,0.0f),
-        glm::vec3(2.0f,-1.0f,0.0f),
-    };
-    size = sizeof(charlesPts) / sizeof(glm::vec3);
-    Charles = Model(charlesPts, size);
-    //Dante
-    glm::vec3 dantePts[] = {
-        glm::vec3(0.0f,  0.0f, 0.0f),
-        glm::vec3(-1.0f,  1.0f, 1.0f),
-        glm::vec3(-2.0f,  1.0f, 0.0f),
-        glm::vec3(1.0f,  1.0f, -1.0f),
-        glm::vec3(2.0f,  1.0f, 0.0f),
-        glm::vec3(-1.0f,  -1.0f, 1.0f),
-        glm::vec3(-2.0f,  -1.0f, 0.0f),
-        glm::vec3(1.0f,  -1.0f, -1.0f),
-        glm::vec3(2.0f,  -1.0f, 0.0f)
-    };
-    size = sizeof(dantePts) / sizeof(glm::vec3);
-    Dante = Model(dantePts, size);
-    //Yeeho
-    glm::vec3 yeehoPts[] = {
-        glm::vec3(0.0f, 5.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, 0.0f),
-        glm::vec3(-2.0f, 5.0f, 0.0f),
-        glm::vec3(-1.0f, 6.0f, -1.0f),
-        glm::vec3(1.0f, 6.0f, -1.0f),
-        glm::vec3(-3.0f, 6.0f, -1.0f),
-        glm::vec3(3.0f, 6.0f, -1.0f),
-        glm::vec3(-2.0f, 7.0f, -2.0f),
-        glm::vec3(2.0f, 7.0f, -2.0f),
-        glm::vec3(2.0f, 7.0f, -2.0f),
-        glm::vec3(0.0f, 7.0f, -2.0f)
-    };
-    size = sizeof(yeehoPts) / sizeof(glm::vec3);
-    Yeeho = Model(yeehoPts, size);
+    //set models
+    Amanda = Model("amanda.md");
+    Calvin = Model("calvin.md");
+    Charles = Model("charles.md");
+    Dante = Model("dante.md");
+    Yeeho = Model("yeeho.md");
     
     /*==================================================
         Shadow Setup
