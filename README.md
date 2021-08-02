@@ -10,13 +10,19 @@
 - Yee Ho Chow		40032218
 
 ## Controls
-- WASD -> Move Camera
-- QE	 -> Rotate about the object at center
-- UHJK -> Move Model
-- YI	 -> Rotate Model
-- -+	 -> Scale
-- Mouse Right Click -> Pan camera Up and Down and Left and Right
-- T(F)PL	 -> Change Render
-- Mouse Left Click -> Zoom
-- 12345->Select model
-- Home Key -> Reset
+- WASD        -> Move Camera
+- QE	        -> Rotate about the object at center
+- UHJK        -> Move Model
+- -+	        -> Scale all models
+- Right Click -> Pan camera
+- T(F)PL	    -> Change Render Mode
+- Left Click  -> Zoom
+- 12345       -> Select model
+- Home Key    -> Reset
+### Rotation Controls
+- SHIFT + UJ    -> Rotate model and wall on X axis
+- YI            -> Rotate model and wall on Y axis
+- SHIFT + HK    -> Rotate model and wall on Z axis
+- Up/Down       -> Rotate model only on X axis
+- Left/Right    -> Rotate model only on Y axis
+- SHFT+ Lft/Rght-> Rotate model only on Z axis
