@@ -23,8 +23,11 @@
 #include "model.h"
 
 
-const float SCR_WIDTH = 1024.0f;
-const float SCR_HEIGHT = 768.0f;
+const float DEFAULT_SCR_WIDTH = 1024.0f;
+const float DEFAULT_SCR_HEIGHT = 768.0f;
+
+float screenWidth = DEFAULT_SCR_WIDTH;
+float screenHeight = DEFAULT_SCR_HEIGHT;
 
 const float modelRotationSpeedMult = 10.0;
 
@@ -684,6 +687,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     camera.setWH(width, height);
+    screenWidth = width;
+    screenHeight = height;
 }
 
 /*==================================================
@@ -740,7 +745,7 @@ int main(int argc, char*argv[])
 
     // Create Window and rendering context using GLFW
     //Resolution 1024 x 768
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Comp371 - Assignment", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, "Comp371 - Assignment", NULL, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -768,7 +773,7 @@ int main(int argc, char*argv[])
     glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
     
     //set camera position
-    camera = Camera(&shader, &lightShader, SCR_WIDTH, SCR_HEIGHT);
+    camera = Camera(&shader, &lightShader, DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
 
 
     //TODO: get models from inputs
@@ -970,7 +975,7 @@ int main(int argc, char*argv[])
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glViewport(0, 0, screenWidth, screenHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.use();
 
