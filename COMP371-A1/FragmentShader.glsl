@@ -6,25 +6,26 @@ in vec3 fragPos;
 in vec3 normal;
 in vec3 textureCoords;
 
+in vec4 FragPosLightSpace;
+
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor = vec3(1.0,1.0,1.0);
 
-//testure stuff
+//texture stuff
 uniform float shininess = 32;
-
-uniform sampler2D tex;
-uniform bool textureOn;
-uniform sampler2D emissionMap;
-uniform bool glowOn;
 uniform float intensity = 1;
+
+uniform bool textureOn;
+uniform bool glowOn;
 uniform bool colorOn = true;
 
+uniform sampler2D tex;
+uniform sampler2D emissionMap;
 
 //shadow stuff
-in vec4 FragPosLightSpace;
-uniform sampler2D shadowMap;
 uniform bool drawShadows;
+uniform sampler2D shadowMap;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -39,7 +40,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // check whether current frag pos is in shadow - adjust for peter panning
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(lightPos - fragPos);
-    float bias = max(0.2 * (1.0 - dot(norm, lightDir)), 0.005);
+    float bias = max(0.25 * (1.0 - dot(norm, lightDir)), 0.1);
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
     return shadow;
@@ -48,7 +49,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main()
 {
         // ambient
-        float ambientStrength = 0.1;
+        float ambientStrength = 0.4;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -58,7 +59,7 @@ void main()
         vec3 diffuse = diff * lightColor;
         
         // specular
-        float specularStrength = 0.1;
+        float specularStrength = 0.4;
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
@@ -72,12 +73,15 @@ void main()
         else{
             shadow = 0.0;
         }
+
+        //calculate overall lighting through phong lighting and shadow
         vec3 litColor = (ambient + (1.0 - shadow) * (diffuse + specular));
         
-        //texture and color settings
+        //color settings
         if (colorOn){
             litColor = litColor * vertexColor;
         }
+        //texture settings
         if(textureOn)
         {
             FragColor = texture(tex, vec2(textureCoords.x, textureCoords.y)) *  vec4(litColor, 1.0);   
@@ -85,6 +89,7 @@ void main()
         else {
             FragColor = vec4(litColor, 1.0);
         }
+        //glow emission map for metal cubes
         if(glowOn)
         {
             FragColor += intensity * (texture(emissionMap, vec2(textureCoords.x, textureCoords.y)) *  vec4(vertexColor, 1.0));

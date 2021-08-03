@@ -28,6 +28,10 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="amanda.md" />
+    <None Include="calvin.md" />
+    <None Include="charles.md" />
+    <None Include="dante.md" />
     <None Include="fragmentShader.glsl" />
     <None Include="FragmentShaderDebug.glsl" />
     <None Include="FragmentShaderDepth.glsl" />
@@ -36,6 +40,7 @@
     <None Include="VertexShaderDebug.glsl" />
     <None Include="VertexShaderDepth.glsl" />
     <None Include="VertexShaderLight.glsl" />
+    <None Include="yeeho.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

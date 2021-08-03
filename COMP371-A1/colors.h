@@ -28,8 +28,7 @@ const glm::vec3 PURPLE_NAVY = rgb(95,89,128);
 const glm::vec3 MANATEE = rgb(159,156,176); //light purple
 
 
-glm::vec3 rgb(float r, float g, float b)
-{
+glm::vec3 rgb(float r, float g, float b){
     return glm::vec3(r/255,g/255,b/255);
 }
 

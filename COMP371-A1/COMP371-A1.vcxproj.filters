@@ -58,5 +58,20 @@
     <None Include="VertexShaderDebug.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="amanda.md">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="calvin.md">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="charles.md">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="dante.md">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="yeeho.md">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
