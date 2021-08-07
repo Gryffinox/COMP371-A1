@@ -928,7 +928,7 @@ void drawModels(int worldLoc, Shader aShader)
         case 1:
             setTexture(METAL, aShader);
             //parameters: world location as int, vertex array offset, s t r transformations
-            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotationsWoutWall);
             /*Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.xAxis);
              Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.yAxis);*/
             setTexture(BRICK, aShader);
@@ -936,7 +936,7 @@ void drawModels(int worldLoc, Shader aShader)
             break;
         case 2:
             setTexture(METAL, aShader);
-            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotations);
+            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation, modelRotationsWoutWall);
             /*Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.xAxis);
              Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation, modelRotations, Calvin.yAxis);*/
             setTexture(BRICK, aShader);
@@ -944,7 +944,7 @@ void drawModels(int worldLoc, Shader aShader)
             break;
         case 3:
             setTexture(METAL, aShader);
-            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotations);
+            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation, modelRotationsWoutWall);
             /*Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.xAxis);
              Charles.drawWall(worldLoc, *charlesColor, scale, modelTranslation, modelRotations, Charles.yAxis);*/
             setTexture(BRICK, aShader);
@@ -952,7 +952,7 @@ void drawModels(int worldLoc, Shader aShader)
             break;
         case 4:
             setTexture(METAL, aShader);
-            Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotations);
+            Dante.draw(worldLoc, *danteColor, scale, modelTranslation, modelRotationsWoutWall);
             /*Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.xAxis);
              Dante.drawWall(worldLoc, *danteColor, scale, modelTranslation, modelRotations, Dante.yAxis);*/
             setTexture(BRICK, aShader);
@@ -960,7 +960,7 @@ void drawModels(int worldLoc, Shader aShader)
             break;
         case 5:
             setTexture(METAL, aShader);
-            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations);
+            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation, modelRotationsWoutWall);
             /*Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.xAxis);
              Yeeho.drawWall(worldLoc, *yeehoColor, scale, modelTranslation, modelRotations, Yeeho.yAxis);*/
             setTexture(BRICK, aShader);
@@ -968,14 +968,14 @@ void drawModels(int worldLoc, Shader aShader)
             break;
         default:
             setTexture(METAL, aShader);
-            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotations);
+            Amanda.draw(worldLoc, *amandaColor, scale, modelTranslation, modelRotationsWoutWall);
             
-            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations);
+            Calvin.draw(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotationsWoutWall);
             
-            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotations);
+            Charles.draw(worldLoc, *charlesColor, scale, modelTranslation + glm::vec3(40.0f, 0.0f, 0.0f), modelRotationsWoutWall);
             
-            Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotations);
-            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotations);
+            Dante.draw(worldLoc, *danteColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, 40.0f), modelRotationsWoutWall);
+            Yeeho.draw(worldLoc, *yeehoColor, scale, modelTranslation + glm::vec3(-40.0f, 0.0f, 0.0f), modelRotationsWoutWall);
             setTexture(BRICK, aShader);
             Amanda.drawWall(worldLoc, *amandaColor, scale, modelTranslation, modelRotations, Amanda.zAxis);
             Calvin.drawWall(worldLoc, *calvinColor, scale, modelTranslation + glm::vec3(0.0f, 0.0f, -40.0f), modelRotations, Calvin.zAxis);
