@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Models">
+      <UniqueIdentifier>{8100cc33-df61-4a86-905f-bd99501143fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -27,6 +30,9 @@
     <ClInclude Include="shader.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="vertexArrayHandler.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -34,29 +40,44 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragmentShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="vertexShader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="FragmentShaderLight.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="VertexShaderLight.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="FragmentShaderDepth.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="VertexShaderDepth.glsl">
-      <Filter>Source Files</Filter>
+    <None Include="FragmentShader.glsl">
+      <Filter>Resource Files</Filter>
     </None>
     <None Include="FragmentShaderDebug.glsl">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="FragmentShaderDepth.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="FragmentShaderLight.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VertexShader.glsl">
+      <Filter>Resource Files</Filter>
     </None>
     <None Include="VertexShaderDebug.glsl">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VertexShaderDepth.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VertexShaderLight.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="amanda.md">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="calvin.md">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="charles.md">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="dante.md">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="yeeho.md">
+      <Filter>Resource Files\Models</Filter>
     </None>
   </ItemGroup>
 </Project>
