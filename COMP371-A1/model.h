@@ -5,6 +5,9 @@
 // And built on ressources from https://learnopengl.com
 //
 
+
+//TODO: make constructor for wall to put wall in separate object
+
 #ifndef Model_h
 #define Model_h
 
@@ -203,11 +206,12 @@ public:
 		for (float y = minY - (WALL_BORDER_THICKNESS); y < maxY + (WALL_BORDER_THICKNESS + 1); y++) {
 			//traverse along the z axis
 			for (float z = minZ - (WALL_BORDER_THICKNESS); z < maxZ + (WALL_BORDER_THICKNESS + 1); z++) {
-				//add the cube at (y, z) to the wall model
-				wallX[counter++] = glm::vec3(center.x, y, z);
+				//add the cube at (y, z) to the wall model on (x, y) because were placing all 3 walls on the z axis
+				wallX[counter++] = glm::vec3(z, y, center.z);
 				//if the cube we just added is in the flat model, remove it from the wall model so that there's a hole
 				for (int i = 0; i < numCubes; i++) {
-					if (wallX[counter - 1].y == positions[i].y && wallX[counter - 1].z == positions[i].z) {
+					//the (y, z) cube in the original model has been translated into (x, y) in the wall
+					if (wallX[counter - 1].y == positions[i].y && wallX[counter - 1].x == positions[i].z) {
 						counter--;
 						break;
 					}
@@ -225,9 +229,9 @@ public:
 		counter = 0;
 		for (float x = minX - (WALL_BORDER_THICKNESS); x < maxX + (WALL_BORDER_THICKNESS + 1); x++) {
 			for (float z = minZ - (WALL_BORDER_THICKNESS); z < maxZ + (WALL_BORDER_THICKNESS + 1); z++) {
-				wallY[counter++] = glm::vec3(x, center.y, z);
+				wallY[counter++] = glm::vec3(x, z, center.z);
 				for (int k = 0; k < numCubes; k++) {
-					if (wallY[counter - 1].x == positions[k].x && wallY[counter - 1].z == positions[k].z) {
+					if (wallY[counter - 1].x == positions[k].x && wallY[counter - 1].y == positions[k].z) {
 						counter--;
 						break;
 					}
@@ -264,14 +268,16 @@ public:
 			positions_default[i] -= center;
 		}
 		for (int i = 0; i < numCubesWallX; i++) {
-			//for the walls, displace them by an additional (half width + wall distance)
-			wallX[i] -= center + glm::vec3(xHalfRange + WALL_OFFSET, .0f, .0f);
+			//wallX[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 10.f);
+			wallX[i] -= glm::vec3((minZ + zHalfRange), (minY + yHalfRange), (minZ + zHalfRange));
 		}
+		
 		for (int i = 0; i < numCubesWallY; i++) {
-			wallY[i] -= center + glm::vec3(.0f, yHalfRange + WALL_OFFSET, .0f);
+			//wallY[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 20.f);
+			wallY[i] -= glm::vec3((minX + xHalfRange), (minZ + zHalfRange), (minZ + zHalfRange));
 		}
 		for (int i = 0; i < numCubesWallZ; i++) {
-			wallZ[i] -= center + glm::vec3(.0f, .0f, zHalfRange + WALL_OFFSET);
+			wallZ[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 30.f);
 		}
 	}
 
@@ -301,13 +307,37 @@ public:
 		modelTranslation.z -= speed;
 	}
 
+	void rotateModel(float angle, int axis) {
+		glm::mat4 rotationMatrix;
+		switch (axis) {
+		case xAxis:
+			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(1.0f, 0.0f, 0.0f));
+			for (int i = 0; i < numCubes; i++) {
+				positions[i] = glm::vec3(rotationMatrix * glm::vec4(positions[i], 1.0f));
+			}
+			break;
+		case yAxis:
+			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+			for (int i = 0; i < numCubes; i++) {
+				positions[i] = glm::vec3(rotationMatrix * glm::vec4(positions[i], 1.0f));
+			}
+			break;
+		case zAxis:
+			rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+			for (int i = 0; i < numCubes; i++) {
+				positions[i] = glm::vec3(rotationMatrix * glm::vec4(positions[i], 1.0f));
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
 	//========================================================
 	//Draw functions
 	//========================================================
 	//Pass in each transformation as a set of coordinates except for scale which applies to all dimensions
 	void draw(Shader shader, int vaoStartIndex, glm::vec3 offset) {
-		int worldLoc = shader.getUniform("worldMatrix");
-
 		//set each transformation matrix based on input variables
 		//all cubes share scaling, rotation and translation matrices
 		glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(modelScale, modelScale, modelScale));
@@ -317,17 +347,16 @@ public:
 			glm::rotate(glm::mat4(1.0f), glm::radians(modelRotation.z), glm::vec3(.0f, .0f, 1.f)
 			);
 		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), modelTranslation + offset);
+		glUniformMatrix4fv(shader.getUniform("normalVectorRotation"), 1, GL_FALSE, &rotationMatrix[0][0]);
 
-		//set rotation for norm -- once per draw call
-		int rotationLoc = shader.getUniform("normalVectorRotation");
-		glUniformMatrix4fv(rotationLoc, 1, GL_FALSE, &rotationMatrix[0][0]);
-
+		int uniformLocation = shader.getUniform("worldMatrix");
+		//set transformation matrix for each cube
 		for (int i = 0; i < numCubes; i++) {
 			//set matrix for position of each cube relative to model
 			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), modelScale * (positions[i]));
 			//Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
-			glm::mat4 worldMatrix = translationMatrix * rotationMatrix * modelMatrix * scalingMatrix;
-			glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+			glm::mat4 transformationMatrix = translationMatrix * rotationMatrix * modelMatrix * scalingMatrix;
+			glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, &transformationMatrix[0][0]);
 			glDrawArrays(GL_TRIANGLES, vaoStartIndex, NUM_CUBE_VERTICES); // 36 vertices, starting at index 0
 		}
 	}
@@ -337,31 +366,28 @@ public:
 	}
 
 	//axis is 1, 2 or 3 matching x y or z
-	void drawWall(Shader shader, int vaoStartIndex, glm::vec3 offset, int axis) {
-
-		int worldLoc = shader.getUniform("worldMatrix");
+	void drawWall(Shader shader, int vaoStartIndex, int axis, glm::vec3 offset) {
 
 		//set each transformation matrix based on input variables
 		glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(modelScale, modelScale, modelScale));
 		//glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
-		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), wallTranslation + offset);
 		glm::mat4 rotationMatrix =
 			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.x), glm::vec3(1.f, .0f, .0f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.y), glm::vec3(.0f, 1.f, .0f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.z), glm::vec3(.0f, .0f, 1.f)
 			);
-		glm::mat4 worldMatrix;
+		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), wallTranslation + offset);
+		glUniformMatrix4fv(shader.getUniform("normalVectorRotation"), 1, GL_FALSE, &rotationMatrix[0][0]);
 
-		int rotationLoc = shader.getUniform("normalVectorRotation");
-		glUniformMatrix4fv(rotationLoc, 1, GL_FALSE, &rotationMatrix[0][0]);
-
+		glm::mat4 transformationMatrix;
+		int uniformLocation = shader.getUniform("worldMatrix");
 		switch (axis) {
 		case xAxis:
 			for (int i = 0; i < numCubesWallX; i++) {
 				glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), modelScale * (wallX[i]));
 				//Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
-				worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
-				glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+				transformationMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
+				glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, &transformationMatrix[0][0]);
 				glDrawArrays(GL_TRIANGLES, vaoStartIndex, NUM_CUBE_VERTICES); // 36 vertices, starting at index 0
 			}
 			break;
@@ -369,8 +395,8 @@ public:
 			for (int i = 0; i < numCubesWallY; i++) {
 				glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), modelScale * (wallY[i]));
 				//Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
-				worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
-				glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+				transformationMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
+				glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, &transformationMatrix[0][0]);
 				glDrawArrays(GL_TRIANGLES, vaoStartIndex, NUM_CUBE_VERTICES); // 36 vertices, starting at index 0
 			}
 			break;
@@ -378,8 +404,8 @@ public:
 			for (int i = 0; i < numCubesWallZ; i++) {
 				glm::mat4 positionMatrix = glm::translate(glm::mat4(1.0f), modelScale * (wallZ[i]));
 				//Scale first, place all cubes relative to center of model, rotate them on center, then move out to proper place
-				worldMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
-				glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &worldMatrix[0][0]);
+				transformationMatrix = translationMatrix * rotationMatrix * positionMatrix * scalingMatrix;
+				glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, &transformationMatrix[0][0]);
 				glDrawArrays(GL_TRIANGLES, vaoStartIndex, NUM_CUBE_VERTICES); // 36 vertices, starting at index 0
 			}
 			break;
@@ -388,7 +414,7 @@ public:
 		}
 	}
 	void drawWall(Shader shader, int vaoStartIndex, int axis) {
-		drawWall(shader, vaoStartIndex, glm::vec3(0, 0, 0), axis);
+		drawWall(shader, vaoStartIndex, axis, glm::vec3(0, 0, 0));
 	}
 
 };

@@ -71,7 +71,7 @@ Model tempModel;
 
 //Struct for first click controls so that each key/click can have its own instance instead of having 3000 variables
 struct KeyControl {
-	KeyControl() : firstClick(true) {};
+	KeyControl() : firstClick(true) {}; 
 	bool firstClick = true;
 	static float lastMousePosX;
 	static float lastMousePosY;
@@ -85,7 +85,7 @@ KeyControl LetterKeys[26];
 
 //Variables necessary for animating certain movements
 float rotationAnimationTime[3];
-enum Axes { x = 0, y = 1, z = 3 };	//yes, there is a separate enum also named axes in the model class. however, i do no think theyre necessarily the same so ive set a separate enum
+enum Axes {x = 0, y = 1, z = 3};	//yes, there is a separate enum also named axes in the model class. however, i do no think theyre necessarily the same so ive set a separate enum
 
 /*================================================================
 	Main
@@ -142,14 +142,15 @@ int main(int argc, char* argv[]) {
 	shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
 	lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
 	depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
-
+	
 	//Light position
-	glm::vec3 lightPos = glm::vec3(0.f, 30.f, 0.f);
+	glm::vec3 lightPos = glm::vec3(20.f, 20.f, 20.f);
 	shader.use();
 	glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
 
-	//Camera position
-	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
+	//camera position
+	//camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
+	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(3.0f, 1.0f, 5.0f), glm::vec3(-1.0f, -0.5f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	//Frame difference for time calculations of animations
 	float deltaTime = 0.0f; // Time between current frame and last frame
@@ -192,7 +193,7 @@ int main(int argc, char* argv[]) {
 		Main Loop / Render Loop
 	--------------------------------*/
 	while (!glfwWindowShouldClose(window)) {
-
+		
 		//Update frames
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -269,9 +270,9 @@ int main(int argc, char* argv[]) {
 ================================================================*/
 void drawModel(Shader theShader) {
 	tempModel.draw(theShader, 0);
-	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -11.f), Model::xAxis);
-	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -12.f), Model::yAxis);
-	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -13.f), Model::zAxis);
+	tempModel.drawWall(theShader, 0, Model::xAxis, glm::vec3(.0f, .0f, -8.f));
+	tempModel.drawWall(theShader, 0, Model::yAxis, glm::vec3(.0f, .0f, -12.f));
+	tempModel.drawWall(theShader, 0, Model::zAxis, glm::vec3(.0f, .0f, -16.f));
 }
 
 /*================================================================
@@ -279,39 +280,39 @@ void drawModel(Shader theShader) {
 ================================================================*/
 void getInput(GLFWwindow* window, float deltaTime) {
 
-	//close
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-	}
+    //close
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
 
-	//Move camera and rotate about object
-	//=====================================================================
-	//press W -- move forward
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera.moveForward(deltaTime);
-	}
-	//press A -- move left
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera.moveLeft(deltaTime);
-	}
-	//press S -- move backward
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera.moveBack(deltaTime);
-	}
-	//press D -- move right
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera.moveRight(deltaTime);
-	}
+    //Move camera and rotate about object
+    //=====================================================================
+    //press W -- move forward
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.moveForward(deltaTime);
+    }
+    //press A -- move left
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.moveLeft(deltaTime);
+    }
+    //press S -- move backward
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.moveBack(deltaTime);
+    }
+    //press D -- move right
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.moveRight(deltaTime);
+    }
 
-	//right mouse -- pan camera in any direction
+    //right mouse -- pan camera in any direction
 	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-		//Current mouse pos
-		double mousePosX, mousePosY;
-		glfwGetCursorPos(window, &mousePosX, &mousePosY);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+        //Current mouse pos
+        double mousePosX, mousePosY;
+        glfwGetCursorPos(window, &mousePosX, &mousePosY);
 		//reset lastMousePos when we first click since the mouse may have moved while not clicked
 		if (RightMouseBtn.firstClick) {
-			RightMouseBtn.lastMousePosX = mousePosX;
+			RightMouseBtn.lastMousePosX= mousePosX;
 			RightMouseBtn.lastMousePosY = mousePosY;
 			RightMouseBtn.firstClick = false;
 		}
@@ -323,32 +324,32 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		//Set last to current
 		RightMouseBtn.lastMousePosX = mousePosX;
 		RightMouseBtn.lastMousePosY = mousePosY;
-		camera.panCamera(dx * deltaTime, dy * deltaTime);
-	}
-	//On release, reset right mouse click variable for inital click
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-		RightMouseBtn.firstClick = true;
-	}
+        camera.panCamera(dx * deltaTime, dy * deltaTime);
+    }
+    //On release, reset right mouse click variable for inital click
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+        RightMouseBtn.firstClick = true;
+    }
 
-	//left-mouse -- zoom in and out.
+    //left-mouse -- zoom in and out.
 	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-		//get y position only, we don't care about x for zooming in
-		double mousePosY;
-		glfwGetCursorPos(window, &mousePosY, &mousePosY);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        //get y position only, we don't care about x for zooming in
+        double mousePosY;
+        glfwGetCursorPos(window, &mousePosY, &mousePosY);
 		//Reset on first click
 		if (LeftMouseBtn.firstClick) {
 			LeftMouseBtn.lastMousePosY = mousePosY;
-			LeftMouseBtn.firstClick = false;
+			LeftMouseBtn.firstClick= false;
 		}
 		double dy = mousePosY - LeftMouseBtn.lastMousePosY;
 		LeftMouseBtn.lastMousePosY = mousePosY;
-		camera.zoomCamera(dy * deltaTime);
-	}
-	//On release, reset left mouse click variable for inital click
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+        camera.zoomCamera(dy * deltaTime);
+    }
+    //On release, reset left mouse click variable for inital click
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
 		LeftMouseBtn.firstClick = true;
-	}
+    }
 
 	//Rotate Object
 	//=====================================================================
@@ -356,7 +357,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		int i = (int)'q' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.x += 90.0f;
+			//tempModel.modelRotation.x += 90.0f;
+			tempModel.rotateModel(90.0f, Model::xAxis);
 			LetterKeys[i].firstClick = false;
 			//std::cout << tempModel.modelRotation.x << ", " << tempModel.modelRotation.y << ", " << tempModel.modelRotation.z << ", ";
 		}
@@ -368,7 +370,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 		int i = (int)'e' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.x -= 90.0f;
+			//tempModel.modelRotation.x -= 90.0f;
+			tempModel.rotateModel(-90.0f, Model::xAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
@@ -379,7 +382,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
 		int i = (int)'c' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.z += 90.0f;
+			//tempModel.modelRotation.z += 90.0f;
+			tempModel.rotateModel(90.0f, Model::zAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
@@ -390,7 +394,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
 		int i = (int)'v' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.z -= 90.0f;
+			//tempModel.modelRotation.z -= 90.0f;
+			tempModel.rotateModel(-90.0f, Model::zAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
@@ -401,7 +406,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
 		int i = (int)'z' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.y += 90.0f;
+			//tempModel.modelRotation.y += 90.0f;
+			tempModel.rotateModel(90.0f, Model::yAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
@@ -412,7 +418,8 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
 		int i = (int)'x' - (int)'a';
 		if (LetterKeys[i].firstClick) {
-			tempModel.modelRotation.y -= 90.0f;
+			//tempModel.modelRotation.y -= 90.0f;
+			tempModel.rotateModel(-90.0f, Model::yAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}

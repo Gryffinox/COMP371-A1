@@ -51,13 +51,29 @@ public:
 	//========================================================
 	Camera() {}
 
+	Camera(float width, float height, glm::vec3 defaultPosition, glm::vec3 defaultFront, glm::vec3 defaultUp) {
+		position = defaultPosition;
+		front = defaultFront;
+		up = defaultUp;
+		worldUp = up;
+		right = glm::normalize(glm::cross(front, worldUp));
+		//yaw = DEFAULT_YAW;
+		yaw = std::atan2f(-defaultFront.z, defaultFront.x) * (180.0 / 3.141592653589793238463);
+		//pitch = DEFAULT_PITCH;
+		pitch = std::atan2f(-defaultFront.y, defaultUp.y)* (180.0 / 3.141592653589793238463);
+		fov = DEFAULT_FOV;
+		this->width = width;
+		this->height = height;
+	}
+
 	Camera(float width, float height) {
 		position = DEFAULT_POS;
 		front = DEFAULT_FRONT;
 		up = DEFAULT_UP;
 		worldUp = up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		yaw = DEFAULT_YAW;
+		//yaw = DEFAULT_YAW;
+		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
 		pitch = DEFAULT_PITCH;
 		fov = DEFAULT_FOV;
 		this->width = width;
@@ -173,29 +189,11 @@ public:
 	//Update camera view based on settings
 	//========================================================
 	void updateProjectionViewMatrices() {
-		//shader->use();
-		//set matrix in both shaders
-		//glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
 		viewMatrix = glm::lookAt(position, position + front, up);
-		//glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-
-		//glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov),  // field of view in degrees
-		//	width / height,      // aspect ratio
-		//	0.1f, 100.0f);       // near and far (near > 0)
 		projectionMatrix = glm::perspective(glm::radians(fov),  // field of view in degrees
 			width / height,      // aspect ratio
 			0.1f, 100.0f);       // near and far (near > 0)
-
-		//glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-
-		//make sure view position updated.
-		//glUniform3fv(viewPosLight, 1, &position[0]);
-
-		//lightShader->use();
-		//glUniformMatrix4fv(viewLight, 1, GL_FALSE, &viewMatrix[0][0]);
-		//glUniformMatrix4fv(projectionLight, 1, GL_FALSE, &projectionMatrix[0][0]);
 	}
-
 	//========================================================
 	//Utility
 	//========================================================

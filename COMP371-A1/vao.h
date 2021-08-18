@@ -9,11 +9,8 @@
 #define vao_h
 
 //TODO: cleanup constants
-namespace vao_consts {
-	const int numCubeVertices = 36;
-	const int numVertexAttributes = 4;
-	const int vertexSize = (3 * 3 + 2); //11 floats
-}
+const int numVertexAttributes = 4;
+const int vertexSize = (3 * 3 + 2); //11 floats (3 for pos, 3 for normal vector, 3 for color, 2 for texture coordinate
 
 GLuint createCubeVAO(glm::vec3 color) {
 	//vertices (with normal)
@@ -110,21 +107,21 @@ GLuint createCubeVAO(glm::vec3 color) {
 	};
 
 	//36 vertices each containing x number of floats where x = stride
-	float vertexArray[vao_consts::numCubeVertices * vao_consts::vertexSize];
+	float vertexArray[Model::NUM_CUBE_VERTICES * vertexSize];
 	//populate the vertex array with the vertex data: position, normal vector, color and texture coordinate
-	for (int i = 0; i < vao_consts::numCubeVertices; i++) {
+	for (int i = 0; i < Model::NUM_CUBE_VERTICES; i++) {
 		//copy the position and normal vector into vertex array from the cube vertices array
 		int offset;
 		for (offset = 0; offset < 6; offset++) {
-			vertexArray[i * vao_consts::vertexSize + offset] = cubeVertices[i * 6 + offset];
+			vertexArray[i * vertexSize + offset] = cubeVertices[i * 6 + offset];
 		}
 		//copy in the colour
-		vertexArray[i * vao_consts::vertexSize + offset++] = color.x;
-		vertexArray[i * vao_consts::vertexSize + offset++] = color.y;
-		vertexArray[i * vao_consts::vertexSize + offset++] = color.z;
+		vertexArray[i * vertexSize + offset++] = color.x;
+		vertexArray[i * vertexSize + offset++] = color.y;
+		vertexArray[i * vertexSize + offset++] = color.z;
 		//copy in texture coordinate
-		vertexArray[i * vao_consts::vertexSize + offset++] = textureCoords[i * 2];
-		vertexArray[i * vao_consts::vertexSize + offset++] = textureCoords[i * 2 + 1];
+		vertexArray[i * vertexSize + offset++] = textureCoords[i * 2];
+		vertexArray[i * vertexSize + offset++] = textureCoords[i * 2 + 1];
 	}
 
 	GLuint cubeVAO, cubeVBO;
@@ -141,18 +138,18 @@ GLuint createCubeVAO(glm::vec3 color) {
 		3,                   // size
 		GL_FLOAT,            // type
 		GL_FALSE,            // normalized?
-		vao_consts::vertexSize * sizeof(float), // stride - each vertex contains "X" size of certain data
+		vertexSize * sizeof(float), // stride - each vertex contains "X" size of certain data
 		(void*)0             // offset
 	);
 	glEnableVertexAttribArray(0);
 	//Normal Vector
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vao_consts::vertexSize * sizeof(float), (void*)sizeof(glm::vec3));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vertexSize * sizeof(float), (void*)sizeof(glm::vec3));
 	glEnableVertexAttribArray(1);
 	//RGB Color
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vao_consts::vertexSize * sizeof(float), (void*)(2 * sizeof(glm::vec3)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, vertexSize * sizeof(float), (void*)(2 * sizeof(glm::vec3)));
 	glEnableVertexAttribArray(2);
 	//Texture coordinate
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, vao_consts::vertexSize * sizeof(float), (void*)(3 * sizeof(glm::vec3)));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, vertexSize * sizeof(float), (void*)(3 * sizeof(glm::vec3)));
 	glEnableVertexAttribArray(3);
 
 	//Unbind
