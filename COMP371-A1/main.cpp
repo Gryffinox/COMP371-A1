@@ -17,6 +17,8 @@
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
 
+#include <irrKlang.h> // sound
+
 //Classes
 #include "shader.h"
 #include "camera.h"
@@ -32,6 +34,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void getInput(GLFWwindow* window, float deltaTime);
+void playSound(char* filename, bool repeat);
 
 /*================================================================
 	Globals
@@ -65,6 +68,8 @@ float KeyControl::lastMousePosY = 0;
 
 KeyControl RightMouseBtn;
 KeyControl LeftMouseBtn;
+
+irrklang::ISoundEngine *SoundEngine = irrklang::createIrrKlangDevice();
 
 /*================================================================
 	Main
@@ -164,6 +169,11 @@ int main(int argc, char* argv[]) {
 	Temp
 	--------------------------------*/
 	Model tempModel = Model("aModel.txt");
+    
+    /*--------------------------------
+    start bck music
+    --------------------------------*/
+   playSound("breakout.mp3", true);
 
 	/*--------------------------------
 		Main Loop / Render Loop
@@ -376,4 +386,9 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LeftMouseBtn.firstClick = true;
     }
 
+}
+
+void playSound(char* filename, bool repeat)
+{
+    SoundEngine->play2D(filename, repeat);
 }
