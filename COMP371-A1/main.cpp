@@ -25,6 +25,7 @@
 //Other
 #include "colors.h"
 #include "vao.h"
+//#include "draw.h"
 
 /*================================================================
 	Forward Declarations
@@ -32,21 +33,32 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void getInput(GLFWwindow* window, float deltaTime);
+void drawModel(Shader theShader);
 
 /*================================================================
 	Globals
 ================================================================*/
 
+/*--------------------------------
+	Constants
+--------------------------------*/
 const float DEFAULT_SCR_WIDTH = 1024.0f;
 const float DEFAULT_SCR_HEIGHT = 768.0f;
-const float SHADOW_WIDTH = 2048.f;
-const float SHADOW_HEIGHT = 2048.f;
+const float SHADOW_WIDTH = 4096.f;
+const float SHADOW_HEIGHT = 4096.f;
 
+const float ANIMATION_TIME = 0.4f;	//how much time should one animation take at most
+
+/*--------------------------------
+	Variables
+--------------------------------*/
 float screenWidth = DEFAULT_SCR_WIDTH;
 float screenHeight = DEFAULT_SCR_HEIGHT;
 
+//Camera
 Camera camera;
 
+//Shaders
 Shader shader;
 Shader lightShader;
 Shader depthShader;
@@ -54,8 +66,12 @@ Shader depthShader;
 //Uniform variables
 bool drawShadows;
 
+//Models
+Model tempModel;
+
 //Struct for first click controls so that each key/click can have its own instance instead of having 3000 variables
 struct KeyControl {
+	KeyControl() : firstClick(true) {};
 	bool firstClick = true;
 	static float lastMousePosX;
 	static float lastMousePosY;
@@ -65,6 +81,11 @@ float KeyControl::lastMousePosY = 0;
 
 KeyControl RightMouseBtn;
 KeyControl LeftMouseBtn;
+KeyControl LetterKeys[26];
+
+//Variables necessary for animating certain movements
+float rotationAnimationTime[3];
+enum Axes { x = 0, y = 1, z = 3 };	//yes, there is a separate enum also named axes in the model class. however, i do no think theyre necessarily the same so ive set a separate enum
 
 /*================================================================
 	Main
@@ -121,7 +142,7 @@ int main(int argc, char* argv[]) {
 	shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
 	lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
 	depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
-	
+
 	//Light position
 	glm::vec3 lightPos = glm::vec3(0.f, 30.f, 0.f);
 	shader.use();
@@ -147,7 +168,8 @@ int main(int argc, char* argv[]) {
 	depthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
 	// Define and upload geometry to the GPU here ...
-	int cubeVAO = createCubeVAO(FUSCHIA);
+	int fuschiaCubeVAO = createCubeVAO(FUSCHIA);
+	int whiteCubeVAO = createCubeVAO();
 
 	/*--------------------------------
 		Shadow Setup
@@ -161,30 +183,34 @@ int main(int argc, char* argv[]) {
 	debugDepthQuad.setInt("depthMap", 0);*/
 
 	/*--------------------------------
-	Temp
+	Model Setup
 	--------------------------------*/
-	Model tempModel = Model("aModel.txt");
+	tempModel = Model("calvin.model");
+	Model center = Model("singleCube.model");
 
 	/*--------------------------------
 		Main Loop / Render Loop
 	--------------------------------*/
 	while (!glfwWindowShouldClose(window)) {
-		
+
+		//Update frames
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		// Each frame, reset color of each pixel to glClearColor
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		//Update the camera matrices.
 		//TODO? Update uniform matrices when we actually move the camera
 		camera.updateProjectionViewMatrices();
 		//pass them to the shader
 		shader.setMat4("viewMatrix", camera.getViewMatrix());
 		shader.setMat4("projectionMatrix", camera.getProjectionMatrix());
-		shader.setVec3("viewPos", camera.getPosition());
+		shader.setVec3("cameraPos", camera.getPosition());
 		lightShader.setMat4("viewMatrix", camera.getViewMatrix());
 		lightShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
 
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-		// Each frame, reset color of each pixel to glClearColor
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//TODO: Update game states
 
 		//Render from the light source's position to generate depth map which will be used to draw shadows
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -192,8 +218,9 @@ int main(int argc, char* argv[]) {
 		glClear(GL_DEPTH_BUFFER_BIT);
 		//Draw the world with the shadow depth shader
 		depthShader.use();
-		glBindVertexArray(cubeVAO);
-		tempModel.draw(depthShader, 0);
+		glBindVertexArray(fuschiaCubeVAO);
+		drawModel(depthShader);
+		//tempModel.draw(depthShader, 0);
 		//draw(depthShader, vao);
 		//draw(shader, vao);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -209,8 +236,11 @@ int main(int argc, char* argv[]) {
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		//draw(shader, vao);
 		shader.use();
-		glBindVertexArray(cubeVAO);
-		tempModel.draw(shader, 0);
+		glBindVertexArray(fuschiaCubeVAO);
+		//tempModel.draw(shader, 0);
+		drawModel(shader);
+		glBindVertexArray(whiteCubeVAO);
+		center.draw(shader, 0);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -234,6 +264,184 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
+/*================================================================
+	Drawers
+================================================================*/
+void drawModel(Shader theShader) {
+	tempModel.draw(theShader, 0);
+	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -11.f), Model::xAxis);
+	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -12.f), Model::yAxis);
+	tempModel.drawWall(theShader, 0, glm::vec3(.0f, .0f, -13.f), Model::zAxis);
+}
+
+/*================================================================
+	Inputs
+================================================================*/
+void getInput(GLFWwindow* window, float deltaTime) {
+
+	//close
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
+
+	//Move camera and rotate about object
+	//=====================================================================
+	//press W -- move forward
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		camera.moveForward(deltaTime);
+	}
+	//press A -- move left
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		camera.moveLeft(deltaTime);
+	}
+	//press S -- move backward
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		camera.moveBack(deltaTime);
+	}
+	//press D -- move right
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camera.moveRight(deltaTime);
+	}
+
+	//right mouse -- pan camera in any direction
+	//=====================================================================
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+		//Current mouse pos
+		double mousePosX, mousePosY;
+		glfwGetCursorPos(window, &mousePosX, &mousePosY);
+		//reset lastMousePos when we first click since the mouse may have moved while not clicked
+		if (RightMouseBtn.firstClick) {
+			RightMouseBtn.lastMousePosX = mousePosX;
+			RightMouseBtn.lastMousePosY = mousePosY;
+			RightMouseBtn.firstClick = false;
+		}
+
+		//Find difference from last pos
+		double dx = mousePosX - RightMouseBtn.lastMousePosX;
+		double dy = mousePosY - RightMouseBtn.lastMousePosY;
+
+		//Set last to current
+		RightMouseBtn.lastMousePosX = mousePosX;
+		RightMouseBtn.lastMousePosY = mousePosY;
+		camera.panCamera(dx * deltaTime, dy * deltaTime);
+	}
+	//On release, reset right mouse click variable for inital click
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+		RightMouseBtn.firstClick = true;
+	}
+
+	//left-mouse -- zoom in and out.
+	//=====================================================================
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		//get y position only, we don't care about x for zooming in
+		double mousePosY;
+		glfwGetCursorPos(window, &mousePosY, &mousePosY);
+		//Reset on first click
+		if (LeftMouseBtn.firstClick) {
+			LeftMouseBtn.lastMousePosY = mousePosY;
+			LeftMouseBtn.firstClick = false;
+		}
+		double dy = mousePosY - LeftMouseBtn.lastMousePosY;
+		LeftMouseBtn.lastMousePosY = mousePosY;
+		camera.zoomCamera(dy * deltaTime);
+	}
+	//On release, reset left mouse click variable for inital click
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+		LeftMouseBtn.firstClick = true;
+	}
+
+	//Rotate Object
+	//=====================================================================
+	//press Q
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		int i = (int)'q' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.x += 90.0f;
+			LetterKeys[i].firstClick = false;
+			//std::cout << tempModel.modelRotation.x << ", " << tempModel.modelRotation.y << ", " << tempModel.modelRotation.z << ", ";
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
+		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
+	}
+	//press E
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		int i = (int)'e' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.x -= 90.0f;
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
+		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
+	}
+	//press C
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		int i = (int)'c' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.z += 90.0f;
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
+		LetterKeys[(int)'c' - (int)'a'].firstClick = true;
+	}
+	//press V
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+		int i = (int)'v' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.z -= 90.0f;
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
+		LetterKeys[(int)'v' - (int)'a'].firstClick = true;
+	}
+	//press Z
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+		int i = (int)'z' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.y += 90.0f;
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_RELEASE) {
+		LetterKeys[(int)'z' - (int)'a'].firstClick = true;
+	}
+	//press X
+	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+		int i = (int)'x' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			tempModel.modelRotation.y -= 90.0f;
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE) {
+		LetterKeys[(int)'x' - (int)'a'].firstClick = true;
+	}
+
+	//Model movement TEMPORARY
+	//press 
+	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+		tempModel.modelTranslation.x += deltaTime * 10;
+	}
+	//press 
+	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+		tempModel.modelTranslation.x -= deltaTime * 10;
+	}
+	//press 
+	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+		tempModel.modelTranslation.z += deltaTime * 10;
+	}
+	//press 
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		tempModel.modelTranslation.z -= deltaTime * 10;
+	}
+}
+
+/*================================================================
+	Other Functions
+================================================================*/
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	// make sure the viewport matches the new window dimensions; note that width and
 	// height will be significantly larger than specified on retina displays.
@@ -275,105 +483,7 @@ void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap) {
 	shader.use();
 	//is the only and first sampler2d so 0
 	shader.setInt("shadowMap", 15);      //will have to change accordingly when merging with main and textures
-	drawShadows = true;
+	drawShadows = false;
 	shader.setBool("drawShadows", drawShadows);
-
-}
-
-void getInput(GLFWwindow* window, float deltaTime) {
-
-    //close
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-
-    //Move camera and rotate about object
-    //=====================================================================
-    //press W -- move forward
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.moveForward(deltaTime);
-    }
-    //press A -- move left
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.moveLeft(deltaTime);
-    }
-    //press S -- move backward
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.moveBack(deltaTime);
-    }
-    //press D -- move right
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.moveRight(deltaTime);
-    }
-    //press Q -- rotate about the object
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        camera.rotateAboutCenter(deltaTime);
-    }
-    //press E -- rotate about the object
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        camera.rotateAboutCenter(-deltaTime);
-    }
-
-    //TFPL for selecting render mode
-    //=====================================================================
-    //press P -- display as points
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-    }
-
-    //press L -- display as wireframe
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-
-    //press T (And F) -- display as filled triangles
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
-    //right mouse -- pan camera in any direction
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-        //Current mouse pos
-        double mousePosX, mousePosY;
-        glfwGetCursorPos(window, &mousePosX, &mousePosY);
-		//reset lastMousePos when we first click since the mouse may have moved while not clicked
-		if (RightMouseBtn.firstClick) {
-			RightMouseBtn.lastMousePosX= mousePosX;
-			RightMouseBtn.lastMousePosY = mousePosY;
-			RightMouseBtn.firstClick = false;
-		}
-
-		//Find difference from last pos
-		double dx = mousePosX - RightMouseBtn.lastMousePosX;
-		double dy = mousePosY - RightMouseBtn.lastMousePosY;
-
-		//Set last to current
-		RightMouseBtn.lastMousePosX = mousePosX;
-		RightMouseBtn.lastMousePosY = mousePosY;
-        camera.panCamera(dx * deltaTime, dy * deltaTime);
-    }
-    //On release, reset right mouse click variable for inital click
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-        RightMouseBtn.firstClick = true;
-    }
-
-    //left-mouse -- zoom in and out.
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        //get y position only, we don't care about x for zooming in
-        double mousePosY;
-        glfwGetCursorPos(window, &mousePosY, &mousePosY);
-		//Reset on first click
-		if (LeftMouseBtn.firstClick) {
-			LeftMouseBtn.lastMousePosY = mousePosY;
-			LeftMouseBtn.firstClick= false;
-		}
-		double dy = mousePosY - LeftMouseBtn.lastMousePosY;
-		LeftMouseBtn.lastMousePosY = mousePosY;
-        camera.zoomCamera(dy * deltaTime);
-    }
-    //On release, reset left mouse click variable for inital click
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-		LeftMouseBtn.firstClick = true;
-    }
 
 }

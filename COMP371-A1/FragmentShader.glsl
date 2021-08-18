@@ -7,7 +7,7 @@ in vec3 normal;
 in vec2 textureCoords;
 
 uniform vec3 lightPos;
-uniform vec3 viewPos;
+uniform vec3 cameraPos;
 uniform vec3 lightColor = vec3(1.0,1.0,1.0);
 
 //testure stuff
@@ -48,7 +48,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main()
 {
         // ambient
-        float ambientStrength = 0.2;
+        float ambientStrength = 0.5;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -59,7 +59,7 @@ void main()
         
         // specular
         float specularStrength = 0.2;
-        vec3 viewDir = normalize(viewPos - fragPos);
+        vec3 viewDir = normalize(cameraPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
         vec3 specular = specularStrength * spec * lightColor;
