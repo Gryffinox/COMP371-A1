@@ -22,18 +22,18 @@
 #include "camera.h"
 #include "model.h"
 
-//Other
+#include "texture.h"
 #include "colors.h"
 #include "vao.h"
-//#include "draw.h"
 
 /*================================================================
 	Forward Declarations
 ================================================================*/
+void updateGameState();
+void drawModel(Shader theShader);
+void getInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
-void getInput(GLFWwindow* window, float deltaTime);
-void drawModel(Shader theShader);
 
 /*================================================================
 	Globals
@@ -66,12 +66,9 @@ Shader depthShader;
 //Uniform variables
 bool drawShadows;
 
-//Models
-Model tempModel;
-
 //Struct for first click controls so that each key/click can have its own instance instead of having 3000 variables
 struct KeyControl {
-	KeyControl() : firstClick(true) {}; 
+	KeyControl() : firstClick(true) {};
 	bool firstClick = true;
 	static float lastMousePosX;
 	static float lastMousePosY;
@@ -85,7 +82,11 @@ KeyControl LetterKeys[26];
 
 //Variables necessary for animating certain movements
 float rotationAnimationTime[3];
-enum Axes {x = 0, y = 1, z = 3};	//yes, there is a separate enum also named axes in the model class. however, i do no think theyre necessarily the same so ive set a separate enum
+
+/*================================================================
+	MORE INCLUDES because global variables required idk I'm in crank mode
+================================================================*/
+#include "game.h"
 
 /*================================================================
 	Main
@@ -142,15 +143,15 @@ int main(int argc, char* argv[]) {
 	shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
 	lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
 	depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
-	
+
 	//Light position
-	glm::vec3 lightPos = glm::vec3(20.f, 20.f, 20.f);
+	glm::vec3 lightPos = glm::vec3(20.f, 20.f, -10.f);
 	shader.use();
 	glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
 
 	//camera position
 	//camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
-	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(3.0f, 2.0f, 6.0f), glm::vec3(-1.0f, -1.0f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(6.0f, 1.0f, 10.0f), glm::vec3(-1.0f, -.0f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	//Frame difference for time calculations of animations
 	float deltaTime = 0.0f; // Time between current frame and last frame
@@ -186,14 +187,26 @@ int main(int argc, char* argv[]) {
 	/*--------------------------------
 	Model Setup
 	--------------------------------*/
-	tempModel = Model("calvin.model");
-	Model center = Model("singleCube.model");
+	numModels = 5;
+	models = new Model[numModels];
+	models[0] = Model("amanda.model");
+	models[1] = Model("calvin.model");
+	models[2] = Model("charles.model");
+	models[3] = Model("dante.model");
+	models[4] = Model("yeeho.model");
+	numModelDist = std::uniform_int_distribution<int>(0, numModels - 1);
+
+	/*--------------------------------
+	Texture load
+	--------------------------------*/
+	drawTextures = true;
+	loadTexture("glossy.jpg", &glossyTexture);
 
 	/*--------------------------------
 		Main Loop / Render Loop
 	--------------------------------*/
 	while (!glfwWindowShouldClose(window)) {
-		
+
 		//Update frames
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -212,7 +225,10 @@ int main(int argc, char* argv[]) {
 		lightShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
 
 		//TODO: Update game states
+		updateGameState();
 
+		//Shadow Pass
+		//================================
 		//Render from the light source's position to generate depth map which will be used to draw shadows
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -221,13 +237,11 @@ int main(int argc, char* argv[]) {
 		depthShader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(depthShader);
-		//tempModel.draw(depthShader, 0);
-		//draw(depthShader, vao);
-		//draw(shader, vao);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		//Regular draw pass
+		//================================
 		//draw as normal but using the depth map to add shadow
-		// reset viewport
 		glViewport(0, 0, screenWidth, screenHeight);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shader.use();
@@ -235,15 +249,9 @@ int main(int argc, char* argv[]) {
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
 		glActiveTexture(GL_TEXTURE15);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
-		//draw(shader, vao);
 		shader.use();
 		glBindVertexArray(whiteCubeVAO);
-		//tempModel.draw(shader, 0);
 		drawModel(shader);
-		glBindVertexArray(whiteCubeVAO);
-		center.draw(shader, 0, glm::vec3(0.0f, 10.0f, 0.0f));
-		glBindVertexArray(fuschiaCubeVAO);
-		center.draw(shader, 0, glm::vec3(0.0f, -10.0f, 0.0f));
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -271,10 +279,71 @@ int main(int argc, char* argv[]) {
 	Drawers
 ================================================================*/
 void drawModel(Shader theShader) {
-	tempModel.draw(theShader, 0);
-	tempModel.drawWall(theShader, 0, Model::xAxis, glm::vec3(.0f, .0f, -20.f));
-	//tempModel.drawWall(theShader, 0, Model::yAxis, glm::vec3(.0f, .0f, -12.f));
-	//tempModel.drawWall(theShader, 0, Model::zAxis, glm::vec3(.0f, .0f, -16.f));
+	setTexture(Texture::Glossy, theShader);
+	models[currentModel].draw(theShader, 0);
+	//Draw one of the 3 walls
+	float yRotation;
+	float zRotation;
+	yRotation = (wallDirection > 0) ? 0.0f : NEG_ROTATION;
+	switch (std::abs(wallDirection)) {
+	case Axes::posx:
+		//set rotation vector
+		switch (wallUp) {
+		case Axes::posy: zRotation = 0.0f; break;
+		case Axes::posz: zRotation = 90.0f; break;
+		case Axes::negy: zRotation = 180.0f; break;
+		case Axes::negz: zRotation = 270.0f; break;
+		default:
+			std::cout << "Something went wrong in switch(wallUp) in case Axes::posx in switch(wallDirection) in drawModels() in main.cpp";
+			exit(EXIT_FAILURE);
+		}
+		wallRotation = glm::vec3(0.0f, yRotation, zRotation);
+		//draw
+		models[currentModel].drawWall(theShader, 0,
+			Model::xAxis,
+			WALL_POS, wallRotation
+		);
+		break;
+	case Axes::posy:
+		//set rotation vector
+		switch (wallUp) {
+		case Axes::posz: zRotation = 0.0f; break;
+		case Axes::posx: zRotation = 90.0f; break;
+		case Axes::negz: zRotation = 180.0f; break;
+		case Axes::negx: zRotation = 270.0f; break;
+		default:
+			std::cout << "Something went wrong in switch(wallUp) in case Axes::posy in switch(wallDirection) in drawModels() in main.cpp";
+			exit(EXIT_FAILURE);
+		}
+		wallRotation = glm::vec3(0.0f, yRotation, zRotation);
+		models[currentModel].drawWall(theShader, 0,
+			Model::yAxis,
+			WALL_POS, wallRotation
+		);
+		break;
+	case Axes::posz:
+		//set rotation vector
+		switch (wallUp) {
+		case Axes::posy: zRotation = 0.0f; break;
+		case Axes::negx: zRotation = 90.0f; break;
+		case Axes::negy: zRotation = 180.0f; break;
+		case Axes::posx: zRotation = 270.0f; break;
+		default:
+			std::cout << "Something went wrong in switch(wallUp) in case Axes::posy in switch(wallDirection) in drawModels() in main.cpp";
+			exit(EXIT_FAILURE);
+		}
+		wallRotation = glm::vec3(0.0f, yRotation, zRotation);
+		models[currentModel].drawWall(theShader, 0,
+			Model::zAxis,
+			WALL_POS, wallRotation
+		);
+		break;
+		//uh end it and let the user know
+	default:
+		std::cout << "Something went wrong switch(wallDirection) in drawModels() in main.cpp";
+		exit(EXIT_FAILURE);
+		break;
+	}
 }
 
 /*================================================================
@@ -282,40 +351,130 @@ void drawModel(Shader theShader) {
 ================================================================*/
 void getInput(GLFWwindow* window, float deltaTime) {
 
-    //close
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
+	//close
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
 
-    //Move camera and rotate about object
-	//UHJK
-    //=====================================================================
-    //press U -- move forward
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-        camera.moveForward(deltaTime);
-    }
-    //press H -- move left
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-        camera.moveLeft(deltaTime);
-    }
-    //press J -- move backward
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-        camera.moveBack(deltaTime);
-    }
-    //press K -- move right
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-        camera.moveRight(deltaTime);
-    }
-
-    //right mouse + f for free cam -- pan camera in any direction
+	//Rotate Object
 	//=====================================================================
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        //Current mouse pos
-        double mousePosX, mousePosY;
-        glfwGetCursorPos(window, &mousePosX, &mousePosY);
+	//press W -- rotate forward (x axis)
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		int i = (int)'w' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			rotateForward();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
+		LetterKeys[(int)'w' - (int)'a'].firstClick = true;
+	}
+	//press S -- rotate backwards (x axis)
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		int i = (int)'s' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			rotateBackward();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
+		LetterKeys[(int)'s' - (int)'a'].firstClick = true;
+	}
+	//press A -- rotate left (y axis)
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		int i = (int)'a' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			turnLeft();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
+		LetterKeys[(int)'a' - (int)'a'].firstClick = true;
+	}
+	//press D -- rotate right (y axis)
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		int i = (int)'d' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			turnRight();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
+		LetterKeys[(int)'d' - (int)'a'].firstClick = true;
+	}
+	//press Q -- roll left (z axis)
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		int i = (int)'q' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			rollLeft();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
+		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
+	}
+	//press E -- roll right (z axis)
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		int i = (int)'e' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			rollRight();
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
+		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
+	}
+	//P to pause game updates
+	//=====================================================================
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+		paused = !paused;
+	}
+
+	//=====================================================================
+	//Debug Controls
+	//=====================================================================
+	//press 1 to move camera forward
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+		models[currentModel].modelTranslation.z += deltaTime * 10;
+		camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f, deltaTime * 10));
+	}
+	//press 2 to move camera backwards
+	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+		models[currentModel].modelTranslation.z -= deltaTime * 10;
+		camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
+	}
+	//C to cycle axes
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		if (LetterKeys[(int)'c' - (int)'a'].firstClick) {
+			totalTime = 0.0f;
+			LetterKeys[(int)'c' - (int)'a'].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
+		LetterKeys[(int)'c' - (int)'a'].firstClick = true;
+	}
+	//V to print variable states
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+		if (LetterKeys[(int)'v' - (int)'a'].firstClick) {
+			std::cout
+				<< "Wall Direction: " << "\t" << wallDirection << "\t\t" << "Wall Up: " << "\t" << wallUp << "\n"
+				<< "Model Direction: " << "\t" << modelForward << "\t\t" << "Model Up: " << "\t" << modelUp << "\n"
+				<< "====================================================" << "\n";
+			LetterKeys[(int)'v' - (int)'a'].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
+		LetterKeys[(int)'v' - (int)'a'].firstClick = true;
+	}
+	//right mouse + f for free cam -- pan camera in any direction
+	//=====================================================================
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		//Current mouse pos
+		double mousePosX, mousePosY;
+		glfwGetCursorPos(window, &mousePosX, &mousePosY);
 		//reset lastMousePos when we first click since the mouse may have moved while not clicked
 		if (RightMouseBtn.firstClick) {
-			RightMouseBtn.lastMousePosX= mousePosX;
+			RightMouseBtn.lastMousePosX = mousePosX;
 			RightMouseBtn.lastMousePosY = mousePosY;
 			RightMouseBtn.firstClick = false;
 		}
@@ -327,119 +486,52 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		//Set last to current
 		RightMouseBtn.lastMousePosX = mousePosX;
 		RightMouseBtn.lastMousePosY = mousePosY;
-        camera.panCamera(dx * deltaTime, dy * deltaTime);
-    }
-    //On release, reset right mouse click variable for inital click
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-        RightMouseBtn.firstClick = true;
-    }
+		camera.panCamera(dx * deltaTime, dy * deltaTime);
+	}
+	//On release, reset right mouse click variable for inital click
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+		RightMouseBtn.firstClick = true;
+	}
 
-    //left-mouse + F for free cam-- zoom in and out.
+	//left-mouse + F for free cam-- zoom in and out.
 	//=====================================================================
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        //get y position only, we don't care about x for zooming in
-        double mousePosY;
-        glfwGetCursorPos(window, &mousePosY, &mousePosY);
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		//get y position only, we don't care about x for zooming in
+		double mousePosY;
+		glfwGetCursorPos(window, &mousePosY, &mousePosY);
 		//Reset on first click
 		if (LeftMouseBtn.firstClick) {
 			LeftMouseBtn.lastMousePosY = mousePosY;
-			LeftMouseBtn.firstClick= false;
+			LeftMouseBtn.firstClick = false;
 		}
 		double dy = mousePosY - LeftMouseBtn.lastMousePosY;
 		LeftMouseBtn.lastMousePosY = mousePosY;
-        camera.zoomCamera(dy * deltaTime);
-    }
-    //On release, reset left mouse click variable for inital click
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+		camera.zoomCamera(dy * deltaTime);
+	}
+	//On release, reset left mouse click variable for inital click
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
 		LeftMouseBtn.firstClick = true;
-    }
-
-	//Rotate Object
+	}
+	//Move camera
+	//UHJK
 	//=====================================================================
-	//press W -- rotate forward (x axis)
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		int i = (int)'w' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.x += 90.0f;
-			tempModel.rotateModel(-90.0f, Model::xAxis);
-			LetterKeys[i].firstClick = false;
-			//std::cout << tempModel.modelRotation.x << ", " << tempModel.modelRotation.y << ", " << tempModel.modelRotation.z << ", ";
-		}
+	//press U -- move forward
+	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+		camera.moveForward(deltaTime);
 	}
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
-		LetterKeys[(int)'w' - (int)'a'].firstClick = true;
+	//press H -- move left
+	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+		camera.moveLeft(deltaTime);
 	}
-	//press S -- rotate backwards (x axis)
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		int i = (int)'s' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.x -= 90.0f;
-			tempModel.rotateModel(90.0f, Model::xAxis);
-			LetterKeys[i].firstClick = false;
-		}
+	//press J -- move backward
+	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+		camera.moveBack(deltaTime);
 	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
-		LetterKeys[(int)'s' - (int)'a'].firstClick = true;
+	//press K -- move right
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		camera.moveRight(deltaTime);
 	}
-	//press A -- rotate left (y axis)
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		int i = (int)'a' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.z += 90.0f;
-			tempModel.rotateModel(90.0f, Model::yAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
-		LetterKeys[(int)'a' - (int)'a'].firstClick = true;
-	}
-	//press D -- rotate right (y axis)
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		int i = (int)'d' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.z -= 90.0f;
-			tempModel.rotateModel(-90.0f, Model::yAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
-		LetterKeys[(int)'d' - (int)'a'].firstClick = true;
-	}
-	//press Q -- roll left (z axis)
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		int i = (int)'q' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.z += 90.0f;
-			tempModel.rotateModel(90.0f, Model::zAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
-		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
-	}
-	//press E -- roll right (z axis)
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-		int i = (int)'e' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.z -= 90.0f;
-			tempModel.rotateModel(-90.0f, Model::zAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
-		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
-	}
-	//Model movement TEMPORARY
-	//press 
-	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-		tempModel.modelTranslation.z += deltaTime * 10;
-		camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f , deltaTime * 10));
-	}
-	//press 
-	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-		tempModel.modelTranslation.z -= deltaTime * 10;
-		camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
-	}
+
 }
 
 /*================================================================

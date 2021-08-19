@@ -5,9 +5,6 @@
 // And built on ressources from https://learnopengl.com
 //
 
-
-//TODO: make constructor for wall to put wall in separate object
-
 #ifndef Model_h
 #define Model_h
 
@@ -247,9 +244,11 @@ public:
 		counter = 0;
 		for (float x = minX - (WALL_BORDER_THICKNESS); x < maxX + (WALL_BORDER_THICKNESS + 1); x++) {
 			for (float y = minY - (WALL_BORDER_THICKNESS); y < maxY + (WALL_BORDER_THICKNESS + 1); y++) {
-				wallZ[counter++] = glm::vec3(x, y, center.z);
+				//Negative x because the wall was being generated from neg z pov instead of pos z
+				wallZ[counter++] = glm::vec3(-x, y, center.z);
 				for (int i = 0; i < numCubes; i++) {
-					if (wallZ[counter - 1].x == positions[i].x && wallZ[counter - 1].y == positions[i].y) {
+					//same here, negative positions[i].x
+					if (wallZ[counter - 1].x == -positions[i].x && wallZ[counter - 1].y == positions[i].y) {
 						counter--;
 						break;
 					}
@@ -268,16 +267,25 @@ public:
 			positions_default[i] -= center;
 		}
 		for (int i = 0; i < numCubesWallX; i++) {
-			//wallX[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 10.f);
+			//different center since its transposed
 			wallX[i] -= glm::vec3((minZ + zHalfRange), (minY + yHalfRange), (minZ + zHalfRange));
 		}
-		
 		for (int i = 0; i < numCubesWallY; i++) {
-			//wallY[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 20.f);
+			//same here, different center due to transposed model
 			wallY[i] -= glm::vec3((minX + xHalfRange), (minZ + zHalfRange), (minZ + zHalfRange));
 		}
 		for (int i = 0; i < numCubesWallZ; i++) {
-			wallZ[i] -= center;// + glm::vec3(.0f, .0f, zHalfRange + 30.f);
+			//different center since the z wall is mirrored
+			wallZ[i] -= glm::vec3(-(minX + xHalfRange), (minY + yHalfRange), (minZ + zHalfRange));
+		}
+	}
+
+	//========================================================
+	//Return to original rotation
+	//========================================================
+	void resetModel() {
+		for (int i = 0; i < numCubes; i++) {
+			positions[i] = positions_default[i];
 		}
 	}
 
@@ -329,7 +337,8 @@ public:
 			}
 			break;
 		default:
-			break;
+			std::cout << "Something went wrong in rotateModel() in model.h";
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -366,15 +375,15 @@ public:
 	}
 
 	//axis is 1, 2 or 3 matching x y or z
-	void drawWall(Shader shader, int vaoStartIndex, int axis, glm::vec3 offset) {
+	void drawWall(Shader shader, int vaoStartIndex, int axis, glm::vec3 offset, glm::vec3 rotation) {
 
 		//set each transformation matrix based on input variables
 		glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(modelScale, modelScale, modelScale));
 		//glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), coordinates + scale*(positions[i]));
 		glm::mat4 rotationMatrix =
-			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.x), glm::vec3(1.f, .0f, .0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.y), glm::vec3(.0f, 1.f, .0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.z), glm::vec3(.0f, .0f, 1.f)
+			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.x + rotation.x), glm::vec3(1.f, .0f, .0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.y + rotation.y), glm::vec3(.0f, 1.f, .0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(wallRotation.z + rotation.z), glm::vec3(.0f, .0f, 1.f)
 			);
 		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), wallTranslation + offset);
 		glUniformMatrix4fv(shader.getUniform("normalVectorRotation"), 1, GL_FALSE, &rotationMatrix[0][0]);
@@ -410,17 +419,19 @@ public:
 			}
 			break;
 		default:
+			std::cout << "Something went wrong in drawWall() in model.h";
+			exit(EXIT_FAILURE);
 			break;
 		}
 	}
 	void drawWall(Shader shader, int vaoStartIndex, int axis) {
-		drawWall(shader, vaoStartIndex, axis, glm::vec3(0, 0, 0));
+		drawWall(shader, vaoStartIndex, axis, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0));
 	}
 
 };
 
 const float Model::SHUFFLE_SPEED = 2.5f;
-const float Model::WALL_BORDER_THICKNESS = 1;
+const float Model::WALL_BORDER_THICKNESS = 2;
 const float Model::WALL_OFFSET = 5;
 
 #endif /* Model_h */

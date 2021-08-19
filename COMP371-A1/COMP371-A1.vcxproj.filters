@@ -27,7 +27,13 @@
     <ClInclude Include="shader.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="vertexArrayHandler.h">
+    <ClInclude Include="texture.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vao.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

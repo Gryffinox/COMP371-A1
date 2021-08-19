@@ -14,11 +14,6 @@ class Camera {
 private:
 	static const float PAN_CONSTANT;
 	static const float ROTATION_SPEED_MULT;
-	static const glm::vec3 DEFAULT_POS;
-	static const glm::vec3 DEFAULT_FRONT;
-	static const glm::vec3 DEFAULT_UP;
-	static const float DEFAULT_YAW;
-	static const float DEFAULT_PITCH;
 	static const float DEFAULT_FOV;
 	static const float SPEED;
 	static const float CAMERA_ANGULAR_SPEED;
@@ -44,6 +39,11 @@ private:
 	glm::vec3 up;
 	glm::vec3 right;
 	glm::vec3 worldUp;
+
+	//default values set in constructor only
+	glm::vec3 default_position;
+	glm::vec3 default_front;
+	glm::vec3 default_up;
 public:
 
 	//========================================================
@@ -51,34 +51,41 @@ public:
 	//========================================================
 	Camera() {}
 
-	Camera(float width, float height, glm::vec3 defaultPosition, glm::vec3 defaultFront, glm::vec3 defaultUp) {
-		position = defaultPosition;
-		front = glm::normalize(defaultFront);
-		up = glm::normalize(defaultUp);
+	Camera(float inWidth, float inHeight, glm::vec3 inPosition, glm::vec3 inFront, glm::vec3 inUp) {
+		//vectors
+		position = inPosition;
+		front = glm::normalize(inFront);
+		up = glm::normalize(inUp);
 		worldUp = up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		//yaw = DEFAULT_YAW;
-		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
-		//pitch = DEFAULT_PITCH;
-		//pitch = std::atan2(std::sqrt(std::pow(front.z, 2) + std::pow(front.x, 2)) ,-front.y) * (180.0 / 3.141592653589793238463);
-		pitch = std::asin(front.y) * (180.0 / 3.141592653589793238463);
+		//euler angles
+		calculateEulerAngles();
+		//viewport dimensions
+		width = inWidth;
+		height = inHeight;
+		//Reset
 		fov = DEFAULT_FOV;
-		this->width = width;
-		this->height = height;
+		default_position = position;
+		default_front = front;
+		default_up = up;
 	}
 
-	Camera(float width, float height) {
-		position = DEFAULT_POS;
-		front = DEFAULT_FRONT;
-		up = DEFAULT_UP;
+	Camera(float inWidth, float inHeight) {
+		position = glm::vec3(0.0f, 0.0f, -10.0f);
+		front = glm::vec3(0.0f, 0.0f, 1.0f);
+		up = glm::vec3(0.0f, 1.0f, 0.0f);
 		worldUp = up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		//yaw = DEFAULT_YAW;
-		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
-		pitch = DEFAULT_PITCH;
+		//euler angles
+		calculateEulerAngles();
+		//viewport dimensions
+		width = inWidth;
+		height = inHeight;
+		//Reset
 		fov = DEFAULT_FOV;
-		this->width = width;
-		this->height = height;
+		default_position = position;
+		default_front = front;
+		default_up = up;
 	}
 
 	//========================================================
@@ -179,14 +186,18 @@ public:
 	//========================================================
 	//Resets the camera to the default position it starts in with default zoom
 	void reset() {
-		position = DEFAULT_POS;
-		front = DEFAULT_FRONT;
-		up = DEFAULT_UP;
-		worldUp = up;
+		position = default_position;
+		front = default_front;
+		up = default_up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		yaw = DEFAULT_YAW;
-		pitch = DEFAULT_PITCH;
 		fov = DEFAULT_FOV;
+		calculateEulerAngles();
+	}
+
+	void calculateEulerAngles() {
+		//euler angles
+		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
+		pitch = std::asin(front.y) * (180.0 / 3.141592653589793238463);
 	}
 
 	void setViewportDimensions(float width, float height) {
@@ -198,12 +209,7 @@ public:
 
 const float Camera::PAN_CONSTANT = 5.f;
 const float Camera::ROTATION_SPEED_MULT = 25.f;
-const glm::vec3 Camera::DEFAULT_POS = glm::vec3(0.0f, 0.0f, -10.0f);
-const glm::vec3 Camera::DEFAULT_FRONT = glm::vec3(0.0f, 0.0f, 1.0f);
-const glm::vec3 Camera::DEFAULT_UP = glm::vec3(0.0f, 1.0f, 0.0f);
-const float Camera::DEFAULT_YAW = -90.f;
-const float Camera::DEFAULT_PITCH = .0f;
-const float Camera::DEFAULT_FOV = 75.f;
+const float Camera::DEFAULT_FOV = 60.f;
 const float Camera::SPEED = 7.5f;
 const float Camera::CAMERA_ANGULAR_SPEED = 45.f;
 

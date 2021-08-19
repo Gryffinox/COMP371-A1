@@ -21,9 +21,11 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="colors.h" />
+    <ClInclude Include="game.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="vertexArrayHandler.h" />
+    <ClInclude Include="texture.h" />
+    <ClInclude Include="vao.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

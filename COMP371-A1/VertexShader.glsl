@@ -11,7 +11,7 @@ uniform mat4 normalVectorRotation = mat4(1.0);
 
 //shadow stuff
 uniform mat4 lightSpaceMatrix;
-out vec4 FragPosLightSpace;
+out vec4 fragmentPositionLightSpace;
 
 out vec3 vertexColor;
 out vec3 fragPos;
@@ -25,6 +25,6 @@ void main()
    normal = vec3(normalVectorRotation * vec4(aNorm, 1.0));
    textureCoords = aTexture;
    mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;
-   FragPosLightSpace = lightSpaceMatrix * vec4(fragPos, 1.0);
+   fragmentPositionLightSpace = lightSpaceMatrix * vec4(fragPos, 1.0);
    gl_Position =  modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);
 }
