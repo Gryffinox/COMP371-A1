@@ -5,25 +5,19 @@ in vec3 vertexColor;
 in vec3 fragPos;
 in vec3 normal;
 in vec2 textureCoords;
+in vec4 fragmentPositionLightSpace;  //for shadow
 
 uniform vec3 lightPos;
-uniform vec3 viewPos;
 uniform vec3 lightColor = vec3(1.0,1.0,1.0);
+uniform vec3 cameraPos;
 
-//testure stuff
 uniform float shininess = 32;
 
 uniform sampler2D tex;
-uniform bool textureOn = false;
-uniform sampler2D emissionMap;
-uniform bool glowOn = false;
-uniform float intensity = 1;
-uniform bool colorOn = true;
-
-
-//shadow stuff
-in vec4 FragPosLightSpace;
 uniform sampler2D shadowMap;
+
+uniform bool colorOn = true;
+uniform bool textureOn = false;
 uniform bool drawShadows = false;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
@@ -48,7 +42,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main()
 {
         // ambient
-        float ambientStrength = 0.2;
+        float ambientStrength = 0.4;
         vec3 ambient = ambientStrength * lightColor;
           
         // diffuse
@@ -59,7 +53,7 @@ void main()
         
         // specular
         float specularStrength = 0.2;
-        vec3 viewDir = normalize(viewPos - fragPos);
+        vec3 viewDir = normalize(cameraPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
         vec3 specular = specularStrength * spec * lightColor;
@@ -67,7 +61,7 @@ void main()
         // calculate shadow
         float shadow = 0.0;
         if(drawShadows){
-            shadow = ShadowCalculation(FragPosLightSpace);
+            shadow = ShadowCalculation(fragmentPositionLightSpace);
         }
         else{
             shadow = 0.0;
@@ -84,9 +78,5 @@ void main()
         } 
         else {
             FragColor = vec4(litColor, 1.0);
-        }
-        if(glowOn)
-        {
-            FragColor += intensity * (texture(emissionMap, textureCoords) *  vec4(vertexColor, 1.0));
-        }   
+        }  
 }

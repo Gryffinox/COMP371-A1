@@ -14,11 +14,6 @@ class Camera {
 private:
 	static const float PAN_CONSTANT;
 	static const float ROTATION_SPEED_MULT;
-	static const glm::vec3 DEFAULT_POS;
-	static const glm::vec3 DEFAULT_FRONT;
-	static const glm::vec3 DEFAULT_UP;
-	static const float DEFAULT_YAW;
-	static const float DEFAULT_PITCH;
 	static const float DEFAULT_FOV;
 	static const float SPEED;
 	static const float CAMERA_ANGULAR_SPEED;
@@ -44,6 +39,11 @@ private:
 	glm::vec3 up;
 	glm::vec3 right;
 	glm::vec3 worldUp;
+
+	//default values set in constructor only
+	glm::vec3 default_position;
+	glm::vec3 default_front;
+	glm::vec3 default_up;
 public:
 
 	//========================================================
@@ -51,17 +51,41 @@ public:
 	//========================================================
 	Camera() {}
 
-	Camera(float width, float height) {
-		position = DEFAULT_POS;
-		front = DEFAULT_FRONT;
-		up = DEFAULT_UP;
+	Camera(float inWidth, float inHeight, glm::vec3 inPosition, glm::vec3 inFront, glm::vec3 inUp) {
+		//vectors
+		position = inPosition;
+		front = glm::normalize(inFront);
+		up = glm::normalize(inUp);
 		worldUp = up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		yaw = DEFAULT_YAW;
-		pitch = DEFAULT_PITCH;
+		//euler angles
+		calculateEulerAngles();
+		//viewport dimensions
+		width = inWidth;
+		height = inHeight;
+		//Reset
 		fov = DEFAULT_FOV;
-		this->width = width;
-		this->height = height;
+		default_position = position;
+		default_front = front;
+		default_up = up;
+	}
+
+	Camera(float inWidth, float inHeight) {
+		position = glm::vec3(0.0f, 0.0f, -10.0f);
+		front = glm::vec3(0.0f, 0.0f, 1.0f);
+		up = glm::vec3(0.0f, 1.0f, 0.0f);
+		worldUp = up;
+		right = glm::normalize(glm::cross(front, worldUp));
+		//euler angles
+		calculateEulerAngles();
+		//viewport dimensions
+		width = inWidth;
+		height = inHeight;
+		//Reset
+		fov = DEFAULT_FOV;
+		default_position = position;
+		default_front = front;
+		default_up = up;
 	}
 
 	//========================================================
@@ -149,66 +173,31 @@ public:
 	}
 
 	//========================================================
-	//Changing position and look orientation
-	//========================================================
-	void rotateAboutCenter(float deltaTime) {
-		//calculate angular positions relative to object to get polar coordinate
-		float angle = glm::degrees(atan2(position.z, position.x));
-		//change angle by deltaTime to move camera
-		angle += (deltaTime * ROTATION_SPEED_MULT);
-		//distance from center
-		float distance = sqrt(pow(position.z, 2) + pow(position.x, 2));
-		//calculate new position
-		position = glm::vec3(distance * cos(glm::radians(angle)), position.y, distance * sin(glm::radians(angle)));
-		//point camera at object
-		yaw = -angle + 180;
-		//update vectors
-		float radYaw = glm::radians(yaw);
-		float radPitch = glm::radians(pitch);
-		front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
-		right = glm::normalize(glm::cross(front, worldUp));
-	}
-
-	//========================================================
 	//Update camera view based on settings
 	//========================================================
 	void updateProjectionViewMatrices() {
-		//shader->use();
-		//set matrix in both shaders
-		//glm::mat4 viewMatrix = glm::lookAt(position, position + front, up);
 		viewMatrix = glm::lookAt(position, position + front, up);
-		//glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-
-		//glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov),  // field of view in degrees
-		//	width / height,      // aspect ratio
-		//	0.1f, 100.0f);       // near and far (near > 0)
 		projectionMatrix = glm::perspective(glm::radians(fov),  // field of view in degrees
 			width / height,      // aspect ratio
 			0.1f, 100.0f);       // near and far (near > 0)
-
-		//glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-
-		//make sure view position updated.
-		//glUniform3fv(viewPosLight, 1, &position[0]);
-
-		//lightShader->use();
-		//glUniformMatrix4fv(viewLight, 1, GL_FALSE, &viewMatrix[0][0]);
-		//glUniformMatrix4fv(projectionLight, 1, GL_FALSE, &projectionMatrix[0][0]);
 	}
-
 	//========================================================
 	//Utility
 	//========================================================
 	//Resets the camera to the default position it starts in with default zoom
 	void reset() {
-		position = DEFAULT_POS;
-		front = DEFAULT_FRONT;
-		up = DEFAULT_UP;
-		worldUp = up;
+		position = default_position;
+		front = default_front;
+		up = default_up;
 		right = glm::normalize(glm::cross(front, worldUp));
-		yaw = DEFAULT_YAW;
-		pitch = DEFAULT_PITCH;
 		fov = DEFAULT_FOV;
+		calculateEulerAngles();
+	}
+
+	void calculateEulerAngles() {
+		//euler angles
+		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
+		pitch = std::asin(front.y) * (180.0 / 3.141592653589793238463);
 	}
 
 	void setViewportDimensions(float width, float height) {
@@ -220,12 +209,7 @@ public:
 
 const float Camera::PAN_CONSTANT = 5.f;
 const float Camera::ROTATION_SPEED_MULT = 25.f;
-const glm::vec3 Camera::DEFAULT_POS = glm::vec3(0.0f, 0.0f, -10.0f);
-const glm::vec3 Camera::DEFAULT_FRONT = glm::vec3(0.0f, 0.0f, 1.0f);
-const glm::vec3 Camera::DEFAULT_UP = glm::vec3(0.0f, 1.0f, 0.0f);
-const float Camera::DEFAULT_YAW = -90.f;
-const float Camera::DEFAULT_PITCH = .0f;
-const float Camera::DEFAULT_FOV = 75.f;
+const float Camera::DEFAULT_FOV = 60.f;
 const float Camera::SPEED = 7.5f;
 const float Camera::CAMERA_ANGULAR_SPEED = 45.f;
 
