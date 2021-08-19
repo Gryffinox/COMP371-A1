@@ -7,9 +7,15 @@
 
 #ifndef vertexArrayHandler_h
 #define vertexArrayHandler_h
+#include <iostream>
+#include <GL/glew.h>
+#include <glm/glm.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "colors.h"
+
+
 
 //vertex start index and count variables
 //start indices
