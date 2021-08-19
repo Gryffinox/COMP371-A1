@@ -21,6 +21,8 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "OBJloader.h"  //For loading .obj files
+#include "OBJloaderV2.h"  //For loading .obj files using a polygon list format
 
 //Other
 #include "colors.h"
