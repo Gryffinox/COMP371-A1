@@ -11,6 +11,7 @@
 #include <random>
 
 //Forward Declarations
+void moveScene(float distance);
 void rotateForward();
 void rotateBackward();
 void turnLeft();
@@ -27,8 +28,9 @@ void rollRight();
 
 //consts
 enum Axes { posx = 1, negx = -1, posy = 2, negy = -2, posz = 3, negz = -3 };	//yes, there is a separate enum also named axes in the model class
+const float DISTANCE = 30.0f;
 const glm::vec3 MODEL_INITIAL_POS = glm::vec3(0.0f, 0.0f, 00.0f);
-const glm::vec3 WALL_POS = glm::vec3(0.0f, 0.0f, -30.0f);
+const glm::vec3 WALL_POS = glm::vec3(0.0f, 0.0f, -DISTANCE);
 const float NEG_ROTATION = 180.0f;
 const int RND_SPINS = 6;		//Number of times to randomly spin the model so that it's not always in the same default orientation
 
@@ -73,12 +75,13 @@ std::uniform_int_distribution<int> posNegDist(0, 1);		//pos negative
 /*--------------------------------
 	updateGameState function
 --------------------------------*/
-void updateGameState() {
+void updateGameState(float deltaTime) {
 	//if paused dont do anything
 	if (paused) {
 		return;
 	}
-	//new level, pick model and direction
+	//New level setup
+	//===================================
 	if (totalTime <= 0.0f) {
 		//reset camera
 		camera.reset();
@@ -92,7 +95,7 @@ void updateGameState() {
 		modelForward = Axes::negz;	//default forward is Negative Z towards the wall
 		modelUp = Axes::posy;		//default up is pointed to sky (pos y)
 		modelRight = Axes::posx;	//remaining direction, from cameras pov is right which is pos x
-		//Spin the model
+		//Spin the model in random directions
 		for (int i = 0; i < RND_SPINS; i++) {
 			rng = spinsDist(rndGenerator);	//spin in a random direction
 			switch (rng) {
@@ -125,8 +128,21 @@ void updateGameState() {
 		totalTime = INITIAL_TIME - timeRemoved;
 		timeLeft = totalTime;
 	}
-	//update positions and time values
+	//MAIN GAME STUFF
+	//===========================
+	//update time
+	timeLeft -= deltaTime;
+	float proportion = deltaTime / totalTime;
+	moveScene(proportion * DISTANCE);
+	//Check for right orientation
+	//increment score stuff
+	//next thing
+	//show score
+}
 
+void moveScene(float distance) {
+	models[currentModel].modelTranslation.z -= distance;
+	camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, distance));
 }
 
 void rotateForward() {

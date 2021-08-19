@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
 		lightShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
 
 		//TODO: Update game states
-		updateGameState();
+		updateGameState(deltaTime);
 
 		//Shadow Pass
 		//================================
