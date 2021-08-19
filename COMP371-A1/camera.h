@@ -53,14 +53,15 @@ public:
 
 	Camera(float width, float height, glm::vec3 defaultPosition, glm::vec3 defaultFront, glm::vec3 defaultUp) {
 		position = defaultPosition;
-		front = defaultFront;
-		up = defaultUp;
+		front = glm::normalize(defaultFront);
+		up = glm::normalize(defaultUp);
 		worldUp = up;
 		right = glm::normalize(glm::cross(front, worldUp));
 		//yaw = DEFAULT_YAW;
-		yaw = std::atan2f(-defaultFront.z, defaultFront.x) * (180.0 / 3.141592653589793238463);
+		yaw = std::atan2f(-front.z, front.x) * (180.0 / 3.141592653589793238463);
 		//pitch = DEFAULT_PITCH;
-		pitch = std::atan2f(-defaultFront.y, defaultUp.y)* (180.0 / 3.141592653589793238463);
+		//pitch = std::atan2(std::sqrt(std::pow(front.z, 2) + std::pow(front.x, 2)) ,-front.y) * (180.0 / 3.141592653589793238463);
+		pitch = std::asin(front.y) * (180.0 / 3.141592653589793238463);
 		fov = DEFAULT_FOV;
 		this->width = width;
 		this->height = height;
@@ -160,27 +161,6 @@ public:
 		float radYaw = glm::radians(yaw);
 		float radPitch = glm::radians(pitch);
 		//Set front facing vector based on yaw and pitch angles
-		front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
-		right = glm::normalize(glm::cross(front, worldUp));
-	}
-
-	//========================================================
-	//Changing position and look orientation
-	//========================================================
-	void rotateAboutCenter(float deltaTime) {
-		//calculate angular positions relative to object to get polar coordinate
-		float angle = glm::degrees(atan2(position.z, position.x));
-		//change angle by deltaTime to move camera
-		angle += (deltaTime * ROTATION_SPEED_MULT);
-		//distance from center
-		float distance = sqrt(pow(position.z, 2) + pow(position.x, 2));
-		//calculate new position
-		position = glm::vec3(distance * cos(glm::radians(angle)), position.y, distance * sin(glm::radians(angle)));
-		//point camera at object
-		yaw = -angle + 180;
-		//update vectors
-		float radYaw = glm::radians(yaw);
-		float radPitch = glm::radians(pitch);
 		front = glm::normalize(glm::vec3(cos(radPitch) * cos(radYaw), sin(radPitch), -cos(radPitch) * sin(radYaw)));
 		right = glm::normalize(glm::cross(front, worldUp));
 	}

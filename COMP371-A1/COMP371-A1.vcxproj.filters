@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\Models">
-      <UniqueIdentifier>{8100cc33-df61-4a86-905f-bd99501143fd}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -63,21 +60,6 @@
     </None>
     <None Include="VertexShaderLight.glsl">
       <Filter>Resource Files</Filter>
-    </None>
-    <None Include="amanda.md">
-      <Filter>Resource Files\Models</Filter>
-    </None>
-    <None Include="calvin.md">
-      <Filter>Resource Files\Models</Filter>
-    </None>
-    <None Include="charles.md">
-      <Filter>Resource Files\Models</Filter>
-    </None>
-    <None Include="dante.md">
-      <Filter>Resource Files\Models</Filter>
-    </None>
-    <None Include="yeeho.md">
-      <Filter>Resource Files\Models</Filter>
     </None>
   </ItemGroup>
 </Project>

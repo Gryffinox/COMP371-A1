@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 
 	//camera position
 	//camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT);
-	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(3.0f, 1.0f, 5.0f), glm::vec3(-1.0f, -0.5f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(3.0f, 2.0f, 6.0f), glm::vec3(-1.0f, -1.0f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	//Frame difference for time calculations of animations
 	float deltaTime = 0.0f; // Time between current frame and last frame
@@ -219,7 +219,7 @@ int main(int argc, char* argv[]) {
 		glClear(GL_DEPTH_BUFFER_BIT);
 		//Draw the world with the shadow depth shader
 		depthShader.use();
-		glBindVertexArray(fuschiaCubeVAO);
+		glBindVertexArray(whiteCubeVAO);
 		drawModel(depthShader);
 		//tempModel.draw(depthShader, 0);
 		//draw(depthShader, vao);
@@ -237,11 +237,13 @@ int main(int argc, char* argv[]) {
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		//draw(shader, vao);
 		shader.use();
-		glBindVertexArray(fuschiaCubeVAO);
+		glBindVertexArray(whiteCubeVAO);
 		//tempModel.draw(shader, 0);
 		drawModel(shader);
 		glBindVertexArray(whiteCubeVAO);
-		center.draw(shader, 0);
+		center.draw(shader, 0, glm::vec3(0.0f, 10.0f, 0.0f));
+		glBindVertexArray(fuschiaCubeVAO);
+		center.draw(shader, 0, glm::vec3(0.0f, -10.0f, 0.0f));
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -270,9 +272,9 @@ int main(int argc, char* argv[]) {
 ================================================================*/
 void drawModel(Shader theShader) {
 	tempModel.draw(theShader, 0);
-	tempModel.drawWall(theShader, 0, Model::xAxis, glm::vec3(.0f, .0f, -8.f));
-	tempModel.drawWall(theShader, 0, Model::yAxis, glm::vec3(.0f, .0f, -12.f));
-	tempModel.drawWall(theShader, 0, Model::zAxis, glm::vec3(.0f, .0f, -16.f));
+	tempModel.drawWall(theShader, 0, Model::xAxis, glm::vec3(.0f, .0f, -20.f));
+	//tempModel.drawWall(theShader, 0, Model::yAxis, glm::vec3(.0f, .0f, -12.f));
+	//tempModel.drawWall(theShader, 0, Model::zAxis, glm::vec3(.0f, .0f, -16.f));
 }
 
 /*================================================================
@@ -286,27 +288,28 @@ void getInput(GLFWwindow* window, float deltaTime) {
     }
 
     //Move camera and rotate about object
+	//UHJK
     //=====================================================================
-    //press W -- move forward
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    //press U -- move forward
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
         camera.moveForward(deltaTime);
     }
-    //press A -- move left
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    //press H -- move left
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
         camera.moveLeft(deltaTime);
     }
-    //press S -- move backward
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    //press J -- move backward
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
         camera.moveBack(deltaTime);
     }
-    //press D -- move right
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    //press K -- move right
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
         camera.moveRight(deltaTime);
     }
 
-    //right mouse -- pan camera in any direction
+    //right mouse + f for free cam -- pan camera in any direction
 	//=====================================================================
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
         //Current mouse pos
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
@@ -331,9 +334,9 @@ void getInput(GLFWwindow* window, float deltaTime) {
         RightMouseBtn.firstClick = true;
     }
 
-    //left-mouse -- zoom in and out.
+    //left-mouse + F for free cam-- zoom in and out.
 	//=====================================================================
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
         //get y position only, we don't care about x for zooming in
         double mousePosY;
         glfwGetCursorPos(window, &mousePosY, &mousePosY);
@@ -353,96 +356,89 @@ void getInput(GLFWwindow* window, float deltaTime) {
 
 	//Rotate Object
 	//=====================================================================
-	//press Q
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		int i = (int)'q' - (int)'a';
+	//press W -- rotate forward (x axis)
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		int i = (int)'w' - (int)'a';
 		if (LetterKeys[i].firstClick) {
 			//tempModel.modelRotation.x += 90.0f;
-			tempModel.rotateModel(90.0f, Model::xAxis);
+			tempModel.rotateModel(-90.0f, Model::xAxis);
 			LetterKeys[i].firstClick = false;
 			//std::cout << tempModel.modelRotation.x << ", " << tempModel.modelRotation.y << ", " << tempModel.modelRotation.z << ", ";
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
-		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
+		LetterKeys[(int)'w' - (int)'a'].firstClick = true;
 	}
-	//press E
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-		int i = (int)'e' - (int)'a';
+	//press S -- rotate backwards (x axis)
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		int i = (int)'s' - (int)'a';
 		if (LetterKeys[i].firstClick) {
 			//tempModel.modelRotation.x -= 90.0f;
-			tempModel.rotateModel(-90.0f, Model::xAxis);
+			tempModel.rotateModel(90.0f, Model::xAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
-		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
+		LetterKeys[(int)'s' - (int)'a'].firstClick = true;
 	}
-	//press C
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-		int i = (int)'c' - (int)'a';
+	//press A -- rotate left (y axis)
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		int i = (int)'a' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			//tempModel.modelRotation.z += 90.0f;
+			tempModel.rotateModel(90.0f, Model::yAxis);
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
+		LetterKeys[(int)'a' - (int)'a'].firstClick = true;
+	}
+	//press D -- rotate right (y axis)
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		int i = (int)'d' - (int)'a';
+		if (LetterKeys[i].firstClick) {
+			//tempModel.modelRotation.z -= 90.0f;
+			tempModel.rotateModel(-90.0f, Model::yAxis);
+			LetterKeys[i].firstClick = false;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
+		LetterKeys[(int)'d' - (int)'a'].firstClick = true;
+	}
+	//press Q -- roll left (z axis)
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		int i = (int)'q' - (int)'a';
 		if (LetterKeys[i].firstClick) {
 			//tempModel.modelRotation.z += 90.0f;
 			tempModel.rotateModel(90.0f, Model::zAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
-		LetterKeys[(int)'c' - (int)'a'].firstClick = true;
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
+		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
 	}
-	//press V
-	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
-		int i = (int)'v' - (int)'a';
+	//press E -- roll right (z axis)
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		int i = (int)'e' - (int)'a';
 		if (LetterKeys[i].firstClick) {
 			//tempModel.modelRotation.z -= 90.0f;
 			tempModel.rotateModel(-90.0f, Model::zAxis);
 			LetterKeys[i].firstClick = false;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
-		LetterKeys[(int)'v' - (int)'a'].firstClick = true;
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
+		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
 	}
-	//press Z
-	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-		int i = (int)'z' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.y += 90.0f;
-			tempModel.rotateModel(90.0f, Model::yAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_RELEASE) {
-		LetterKeys[(int)'z' - (int)'a'].firstClick = true;
-	}
-	//press X
-	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-		int i = (int)'x' - (int)'a';
-		if (LetterKeys[i].firstClick) {
-			//tempModel.modelRotation.y -= 90.0f;
-			tempModel.rotateModel(-90.0f, Model::yAxis);
-			LetterKeys[i].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE) {
-		LetterKeys[(int)'x' - (int)'a'].firstClick = true;
-	}
-
 	//Model movement TEMPORARY
 	//press 
-	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-		tempModel.modelTranslation.x += deltaTime * 10;
-	}
-	//press 
-	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		tempModel.modelTranslation.x -= deltaTime * 10;
-	}
-	//press 
-	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
 		tempModel.modelTranslation.z += deltaTime * 10;
+		camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f , deltaTime * 10));
 	}
 	//press 
-	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
 		tempModel.modelTranslation.z -= deltaTime * 10;
+		camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
 	}
 }
 
