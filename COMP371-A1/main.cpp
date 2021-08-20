@@ -168,57 +168,56 @@ int main(int argc, char* argv[]) {
     }
 
     FT_Face face;
-    if (FT_New_Face(ft, "Roboto-Regular.ttf", 0, &face))
+    if (FT_New_Face(ft, "PTMono-Regular.ttf", 0, &face))
     {
         std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
         return -1;
     }
     
-    FT_Set_Pixel_Sizes(face, 0, 48);
-      
-    for (unsigned char c = 0; c < 128; c++)
-    {
-        // load character glyph
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+        FT_Set_Pixel_Sizes(face, 0, 48);
+          
+        for (unsigned char c = 0; c < 128; c++)
         {
-            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
-            continue;
+            // load character glyph
+            if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+            {
+                std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+                continue;
+            }
+            // generate texture
+            unsigned int textTexture;
+            glGenTextures(1, &textTexture);
+            glBindTexture(GL_TEXTURE_2D, textTexture);
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RED,
+                face->glyph->bitmap.width,
+                face->glyph->bitmap.rows,
+                0,
+                GL_RED,
+                GL_UNSIGNED_BYTE,
+                face->glyph->bitmap.buffer
+            );
+            // set texture options
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // now store character for later use
+            Character character = {
+                textTexture,
+                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+                static_cast<unsigned int>(face->glyph->advance.x)
+            };
+            Characters.insert(std::pair<char, Character>(c, character));
         }
-        // generate texture
-        unsigned int textTexture;
-        glGenTextures(1, &textTexture);
-        glBindTexture(GL_TEXTURE_2D, textTexture);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
-        );
-        // set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // now store character for later use
-        Character character = {
-            textTexture,
-            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            static_cast<unsigned int>(face->glyph->advance.x)
-        };
-        Characters.insert(std::pair<char, Character>(c, character));
     
-    }
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
     
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   
     
     glGenVertexArrays(1, &VAOT);
     glGenBuffers(1, &VBOT);
@@ -248,11 +247,7 @@ int main(int argc, char* argv[]) {
 	lightShader = Shader("VertexShaderLight.glsl", "FragmentShaderLight.glsl");
 	depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
     textShader = Shader("VertexShaderText.glsl", "FragmentShaderText.glsl");
-    
-    textShader.use();
-    glm::mat4 textprojection = glm::ortho(0.0f, screenWidth, 0.0f, screenHeight);
-    textShader.setMat4("projection", textprojection);
-    textShader.setVec3("textColor", glm::vec3(0,0,0));
+
 
 	//Light position
 	glm::vec3 lightPos = glm::vec3(20.f, 20.f, -10.f);
@@ -278,7 +273,7 @@ int main(int argc, char* argv[]) {
 	//put it in a uniform for the depth shader to use to generate shadow map
 	depthShader.use();
 	depthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
+    
 	// Define and upload geometry to the GPU here ...
 	int fuschiaCubeVAO = createCubeVAO(FUSCHIA);
 	int whiteCubeVAO = createCubeVAO();
@@ -360,6 +355,7 @@ int main(int argc, char* argv[]) {
 		//================================
 		//draw as normal but using the depth map to add shadow
 		glViewport(0, 0, screenWidth, screenHeight);
+        
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shader.use();
 		// Draw geometry
@@ -370,9 +366,16 @@ int main(int argc, char* argv[]) {
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(shader);
         
-        //textShader.use();
-        renderText(textShader, "This is sample text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-
+        
+        textShader.use();
+        textShader.setMat4("projectionMatrix", glm::ortho(0.0f, screenWidth, screenHeight, 0.0f));
+        
+        renderText(textShader, "abcdefghijklmnopqrstuvwxyz", 100.0f, 100.0f, 2.f, FUSCHIA);
+        renderText(textShader, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100.0f, 200.0f, 2.f, YELLOW);
+        renderText(textShader, "1234567890", 100.0f, 300.0f, 2.f, LIGHT_BLUE);
+        
+        
+    
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
 		/*debugDepthQuad.use();
@@ -729,13 +732,13 @@ void renderText(Shader &s, std::string text, float x, float y, float scale, glm:
         float h = ch.Size.y * scale;
         // update VBO for each character
         float vertices[6][4] = {
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos,     ypos,       0.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
+            { xpos,     ypos + h,   0.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 0.0f },
+            { xpos,     ypos,       0.0f, 0.0f },
 
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
-            { xpos + w, ypos + h,   1.0f, 0.0f }
+            { xpos,     ypos + h,   0.0f, 1.0f },
+            { xpos + w, ypos + h,   1.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 0.0f }
         };
         // render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
