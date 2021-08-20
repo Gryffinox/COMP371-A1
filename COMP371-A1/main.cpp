@@ -394,20 +394,10 @@ int main(int argc, char* argv[]) {
 	int activeVAOVertices = heraclesVertices;
 	GLuint activeVAO = heraclesVAO;
 
-	// Camera parameters for view transform
-	glm::vec3 cameraPosition(0.6f, 1.0f, 10.0f);
-	glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
-	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-
 	// Set projection matrix for shader, this won't change
 	glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
 		800.0f / 600.0f,  // aspect ratio
 		0.01f, 100.0f);   // near and far (near > 0)
-
-	// Set initial view matrix
-	//glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
-	//	cameraPosition + cameraLookAt,  // center
-	//	cameraUp); // up
 
 	// Set View and Projection matrices on both shaders
 	setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
@@ -475,8 +465,6 @@ int main(int argc, char* argv[]) {
 		setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
 
 		// Set the view matrix for first person camera
-		/*glm::mat4 viewMatrix(1.0f);
-		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);*/
 		setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
 
 		//Draw the stored vertex objects
