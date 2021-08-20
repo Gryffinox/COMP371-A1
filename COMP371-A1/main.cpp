@@ -7,6 +7,9 @@
 
 #include <iostream>
 #include <map>
+#include <algorithm>
+#include <vector>
+
 
 
 #define GLEW_STATIC 1   // This allows linking with Static Library on Windows, without DLL
@@ -17,6 +20,7 @@
 
 #include <glm/glm.hpp>  // GLM is an optimized math library with syntax to similar to OpenGL Shading Language
 #include <glm/gtc/matrix_transform.hpp> // include this to create transformation matrices
+#include <glm/common.hpp>
 
 #include <irrKlang.h> // sound
 
@@ -27,10 +31,14 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "OBJloader.h"  //For loading .obj files
+#include "OBJloaderV2.h"  //For loading .obj files using a polygon list format
 
 #include "texture.h"
 #include "colors.h"
 #include "vao.h"
+
+using namespace std;
 
 /*================================================================
 	Forward Declarations
@@ -142,6 +150,209 @@ void renderQuad() {
 	glBindVertexArray(quadVAO);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	glBindVertexArray(0);
+}
+
+
+int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource)
+{
+	// compile and link shader program
+	// return shader program id
+	// ------------------------------------
+
+	// vertex shader
+	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+
+	// check for shader compile errors
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	// fragment shader
+	int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	// check for shader compile errors
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	// link shaders
+	int shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	// check for linking errors
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	return shaderProgram;
+}
+
+const char* getVertexShaderSource()
+{
+	// For now, you use a string for your shader code, in the assignment, shaders will be stored in .glsl files
+	return
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 aPos;"
+		"layout (location = 1) in vec3 aNormal;"
+		""
+		"out vec3 vertexNormal;"
+		""
+		"uniform mat4 worldMatrix;"
+		"uniform mat4 viewMatrix = mat4(1.0);"  // default value for view matrix (identity)
+		"uniform mat4 projectionMatrix = mat4(1.0);"
+		""
+		"void main()"
+		"{"
+		"   "   //TODO 2 We should pass along the normal to the fragment shader
+		"   mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;"
+		"   gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);"
+		"}";
+}
+
+const char* getFragmentShaderSource()
+{
+	return
+		"#version 330 core\n"
+		"in vec3 vertexNormal;"
+		"out vec4 FragColor;"
+		"void main()"
+		"{"
+		"   FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);" //TODO 2 Use the normals as fragment colors
+		"}";
+}
+
+void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
+{
+	glUseProgram(shaderProgram);
+	GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projectionMatrix");
+	glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+}
+
+void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
+{
+	glUseProgram(shaderProgram);
+	GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "viewMatrix");
+	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+}
+
+void setWorldMatrix(int shaderProgram, glm::mat4 worldMatrix)
+{
+	glUseProgram(shaderProgram);
+	GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "worldMatrix");
+	glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
+}
+
+GLuint setupModelVBO(string path, int& vertexCount) {
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> UVs;
+
+	//read the vertex data from the model's OBJ file
+	loadOBJ(path.c_str(), vertices, normals, UVs);
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO); //Becomes active VAO
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+
+	//Vertex VBO setup
+	GLuint vertices_VBO;
+	glGenBuffers(1, &vertices_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	//Normals VBO setup
+	GLuint normals_VBO;
+	glGenBuffers(1, &normals_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+
+	//UVs VBO setup
+	GLuint uvs_VBO;
+	glGenBuffers(1, &uvs_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
+	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs, as we are using multiple VAOs)
+	vertexCount = vertices.size();
+	return VAO;
+}
+
+//Sets up a model using an Element Buffer Object to refer to vertex data
+GLuint setupModelEBO(string path, int& vertexCount)
+{
+	vector<int> vertexIndices; //The contiguous sets of three indices of vertices, normals and UVs, used to make a triangle
+	vector<glm::vec3> vertices;
+	vector<glm::vec3> normals;
+	vector<glm::vec2> UVs;
+
+	//read the vertices from the cube.obj file
+	//We won't be needing the normals or UVs for this program
+	loadOBJ2(path.c_str(), vertexIndices, vertices, normals, UVs);
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO); //Becomes active VAO
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+
+	//Vertex VBO setup
+	GLuint vertices_VBO;
+	glGenBuffers(1, &vertices_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	//Normals VBO setup
+	GLuint normals_VBO;
+	glGenBuffers(1, &normals_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+
+	//UVs VBO setup
+	GLuint uvs_VBO;
+	glGenBuffers(1, &uvs_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
+	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(2);
+
+	//EBO setup
+	GLuint EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(int), &vertexIndices.front(), GL_STATIC_DRAW);
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
+	vertexCount = vertexIndices.size();
+	return VAO;
 }
 
 /*================================================================
@@ -333,9 +544,38 @@ int main(int argc, char* argv[]) {
 	loadTexture("textures/concrete.jpg", &concreteTexture);
 
 	/*--------------------------------
-	start bck music
+	Music playback begin
 	--------------------------------*/
 	//playSound((char*)"sounds/lofi.mp3", true);
+
+	/*--------------------------------
+		Object Loader
+	--------------------------------*/
+	// Compile and link shaders here ...
+	int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
+
+	//Setup models
+	string cubePath = "../VS2017/assets/models/cube.obj";
+	string heraclesPath = "../VS2017/assets/models/heracles.obj";
+
+	int heraclesVertices;
+	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
+	int cubeVertices;
+	GLuint cubeVAO1 = setupModelVBO(cubePath, cubeVertices);
+	//TODO 3 load the models as EBOs instead of only VBOs
+
+	int activeVAOVertices = heraclesVertices;
+	GLuint activeVAO = heraclesVAO;
+
+	// Set projection matrix for shader, this won't change
+	glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
+		800.0f / 600.0f,  // aspect ratio
+		0.01f, 100.0f);   // near and far (near > 0)
+
+	// Set View and Projection matrices on both shaders
+	setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
+
+	setProjectionMatrix(whiteShaderProgram, projectionMatrix);
 
 	/*--------------------------------
 		Main Loop / Render Loop
@@ -396,6 +636,28 @@ int main(int argc, char* argv[]) {
 		renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
 		//and maybe add a level indicator
 		renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
+
+		/*--------------------------------
+			Object Loader
+		--------------------------------*/
+		// Draw colored geometry
+		glUseProgram(whiteShaderProgram);
+
+		// Set world matrix
+		glm::mat4 modelWorldMatrix =
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+		setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
+
+		// Set the view matrix for first person camera
+		setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
+
+		//Draw the stored vertex objects
+		glBindVertexArray(activeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
+
+		glBindVertexArray(0);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
