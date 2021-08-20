@@ -383,13 +383,16 @@ int main(int argc, char* argv[]) {
 
 	//Setup models
 	string cubePath = "../VS2017/assets/models/cube.obj";
+	string heraclesPath = "../VS2017/assets/models/heracles.obj";
 
+	int heraclesVertices;
+	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
 	int cubeVertices;
 	GLuint cubeVAO1 = setupModelVBO(cubePath, cubeVertices);
 	//TODO 3 load the models as EBOs instead of only VBOs
 
-	int activeVAOVertices = cubeVertices;
-	GLuint activeVAO = cubeVAO1;
+	int activeVAOVertices = heraclesVertices;
+	GLuint activeVAO = heraclesVAO;
 
 	// Camera parameters for view transform
 	glm::vec3 cameraPosition(0.6f, 1.0f, 10.0f);
@@ -402,12 +405,12 @@ int main(int argc, char* argv[]) {
 		0.01f, 100.0f);   // near and far (near > 0)
 
 	// Set initial view matrix
-	glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
-		cameraPosition + cameraLookAt,  // center
-		cameraUp); // up
+	//glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
+	//	cameraPosition + cameraLookAt,  // center
+	//	cameraUp); // up
 
 	// Set View and Projection matrices on both shaders
-	setViewMatrix(whiteShaderProgram, viewMatrix);
+	setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
 
 	setProjectionMatrix(whiteShaderProgram, projectionMatrix);
 
@@ -472,9 +475,9 @@ int main(int argc, char* argv[]) {
 		setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
 
 		// Set the view matrix for first person camera
-		glm::mat4 viewMatrix(1.0f);
-		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
-		setViewMatrix(whiteShaderProgram, viewMatrix);
+		/*glm::mat4 viewMatrix(1.0f);
+		viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);*/
+		setViewMatrix(whiteShaderProgram, camera.getViewMatrix());
 
 		//Draw the stored vertex objects
 		glBindVertexArray(activeVAO);
@@ -494,30 +497,6 @@ int main(int argc, char* argv[]) {
 		// End Frame
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		glm::vec3 cameraSideVector = glm::cross(cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
-
-		glm::normalize(cameraSideVector);
-		// Use camera lookat and side vectors to update positions with ASDW
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		{
-			cameraPosition += cameraLookAt * deltaTime;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		{
-			cameraPosition -= cameraLookAt * deltaTime;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		{
-			cameraPosition += cameraSideVector * deltaTime;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		{
-			cameraPosition -= cameraSideVector * deltaTime;
-		}
 
 		// Handle inputs
 		getInput(window, deltaTime);
