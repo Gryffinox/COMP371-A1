@@ -32,13 +32,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FragmentShader.glsl" />
-    <None Include="FragmentShaderDebug.glsl" />
     <None Include="FragmentShaderDepth.glsl" />
     <None Include="FragmentShaderLight.glsl" />
+    <None Include="FragmentShaderText.glsl" />
     <None Include="VertexShader.glsl" />
-    <None Include="VertexShaderDebug.glsl" />
     <None Include="VertexShaderDepth.glsl" />
     <None Include="VertexShaderLight.glsl" />
+    <None Include="VertexShaderText.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -111,13 +111,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\lib\glm;$(SolutionDir)\lib\glfw-3.3\include;$(SolutionDir)\lib\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib\irrKlang-1.6.0\include;$(SolutionDir)lib\freetype-2.11\include;$(SolutionDir)lib\glm;$(SolutionDir)lib\glfw-3.3\include;$(SolutionDir)lib\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\lib\glfw-3.3\lib\win32\lib-vc2017;$(SolutionDir)\lib\glew-2.1.0\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\irrKlang-1.6.0\lib\Win32-visualStudio;$(SolutionDir)lib\freetype-2.11\release static\vs2015-2019\win32;$(SolutionDir)lib\glfw-3.3\lib\win32\lib-vc2017;$(SolutionDir)lib\glew-2.1.0\lib\win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;freetype.lib;irrkLang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

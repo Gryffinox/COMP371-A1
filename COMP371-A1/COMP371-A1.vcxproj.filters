@@ -46,9 +46,6 @@
     <None Include="FragmentShader.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="FragmentShaderDebug.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="FragmentShaderDepth.glsl">
       <Filter>Resource Files</Filter>
     </None>
@@ -58,13 +55,16 @@
     <None Include="VertexShader.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="VertexShaderDebug.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="VertexShaderDepth.glsl">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="VertexShaderLight.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="FragmentShaderText.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VertexShaderText.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

@@ -33,7 +33,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // check whether current frag pos is in shadow - adjust for peter panning
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(lightPos - fragPos);
-    float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
+    float bias = max(0.03 * (1.0 - dot(norm, lightDir)), 0.015);
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
     return shadow;
