@@ -23,10 +23,53 @@
 #include "OBJloaderV2TEST.h"  //For loading .obj files using a polygon list format
 
 
-using namespace glm;
 using namespace std;
 
+int createVertexBufferObject()
+{
+    // A vertex is a point on a polygon, it contains positions and other data (eg: colors)
+    glm::vec3 vertexArray[] = {
+        glm::vec3(0.0f,  0.5f, 0.0f),  // top center position
+        glm::vec3(0.5f, -0.5f, 0.0f),  // bottom right        
+        glm::vec3(-0.5f, -0.5f, 0.0f),  // bottom left        
+    };
 
+    // Create a vertex array
+    GLuint vertexArrayObject;
+    glGenVertexArrays(1, &vertexArrayObject);
+    glBindVertexArray(vertexArrayObject);
+
+
+    // Upload Vertex Buffer to the GPU, keep a reference to it (vertexBufferObject)
+    GLuint vertexBufferObject;
+    glGenBuffers(1, &vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexArray), vertexArray, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0,                   // attribute 0 matches aPos in Vertex Shader
+        3,                   // size
+        GL_FLOAT,            // type
+        GL_FALSE,            // normalized?
+        2 * sizeof(glm::vec3), // stride - each vertex contain 2 vec3 (position, color)
+        (void*)0             // array buffer offset
+    );
+    glEnableVertexAttribArray(0);
+
+
+    glVertexAttribPointer(1,                            // attribute 1 matches aColor in Vertex Shader
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        2 * sizeof(glm::vec3),
+        (void*)sizeof(glm::vec3)      // color is offseted a vec3 (comes after position)
+    );
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // VAO already stored the state we just defined, safe to unbind buffer
+    glBindVertexArray(0); // Unbind to not modify the VAO
+
+    return vertexArrayObject;
+}
 
 const char* getVertexShaderSource()
 {
@@ -116,21 +159,21 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     return shaderProgram;
 }
 
-void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix)
+void setProjectionMatrix(int shaderProgram, glm::mat4 projectionMatrix)
 {
     glUseProgram(shaderProgram);
     GLuint projectionMatrixLocation = glGetUniformLocation(shaderProgram, "projectionMatrix");
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
 }
 
-void setViewMatrix(int shaderProgram, mat4 viewMatrix)
+void setViewMatrix(int shaderProgram, glm::mat4 viewMatrix)
 {
     glUseProgram(shaderProgram);
     GLuint viewMatrixLocation = glGetUniformLocation(shaderProgram, "viewMatrix");
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
 }
 
-void setWorldMatrix(int shaderProgram, mat4 worldMatrix)
+void setWorldMatrix(int shaderProgram, glm::mat4 worldMatrix)
 {
     glUseProgram(shaderProgram);
     GLuint worldMatrixLocation = glGetUniformLocation(shaderProgram, "worldMatrix");
@@ -269,8 +312,8 @@ int main(int argc, char* argv[])
     int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
 
     //Setup models
-    string cubePath = "../assets/models/cube.obj";
-    string heraclesPath = "../assets/models/heracles.obj";
+    string cubePath = "../models/cube.obj";
+    string heraclesPath = "../models/heracles.obj";
 
     //TODO 1 load the more interesting model: "heracles.obj"
     int heraclesVertices;
@@ -285,9 +328,9 @@ int main(int argc, char* argv[])
 
 
     // Camera parameters for view transform
-    vec3 cameraPosition(0.6f, 1.0f, 10.0f);
-    vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
-    vec3 cameraUp(0.0f, 1.0f, 0.0f);
+    glm::vec3 cameraPosition(0.6f, 1.0f, 10.0f);
+    glm::vec3 cameraLookAt(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
     // Other camera parameters
     float cameraSpeed = 1.0f;
@@ -299,12 +342,12 @@ int main(int argc, char* argv[])
     float spinningAngle = 0.0f;
 
     // Set projection matrix for shader, this won't change
-    mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
+    glm::mat4 projectionMatrix = glm::perspective(70.0f,            // field of view in degrees
         800.0f / 600.0f,  // aspect ratio
         0.01f, 100.0f);   // near and far (near > 0)
 
 // Set initial view matrix
-    mat4 viewMatrix = lookAt(cameraPosition,  // eye
+    glm::mat4 viewMatrix = lookAt(cameraPosition,  // eye
         cameraPosition + cameraLookAt,  // center
         cameraUp); // up
 
@@ -340,15 +383,15 @@ int main(int argc, char* argv[])
         spinningAngle += 45.0f * dt; //This is equivalent to 45 degrees per second
 
         // Set world matrix
-        mat4 modelWorldMatrix =
-            glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, -5.0f)) *
-            glm::rotate(mat4(1.0f), radians(spinningAngle), vec3(0.0f, 1.0f, 0.0f)) *
-            glm::rotate(mat4(1.0f), radians(-90.0f), vec3(1.0f, 0.0f, 0.0f)) *
-            glm::scale(mat4(1.0f), vec3(0.2f));
+        glm::mat4 modelWorldMatrix =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(spinningAngle), glm::vec3(0.0f, 1.0f, 0.0f)) *
+            glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
         setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
 
         // Set the view matrix for first person camera
-        mat4 viewMatrix(1.0f);
+        glm::mat4 viewMatrix(1.0f);
         viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
         setViewMatrix(whiteShaderProgram, viewMatrix);
 
@@ -398,11 +441,11 @@ int main(int argc, char* argv[])
         // Clamp vertical angle to [-85, 85] degrees
         cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
 
-        float theta = radians(cameraHorizontalAngle);
-        float phi = radians(cameraVerticalAngle);
+        float theta = glm::radians(cameraHorizontalAngle);
+        float phi = glm::radians(cameraVerticalAngle);
 
-        cameraLookAt = vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
-        vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
+        cameraLookAt = glm::vec3(cosf(phi) * cosf(theta), sinf(phi), -cosf(phi) * sinf(theta));
+        glm::vec3 cameraSideVector = glm::cross(cameraLookAt, glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::normalize(cameraSideVector);
 
