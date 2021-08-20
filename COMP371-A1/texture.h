@@ -13,10 +13,10 @@
 
 //Globals
 bool drawTextures;
-enum Texture { Glossy };
+enum Texture { Glossy, Concrete };
 
 //Texture ints
-GLuint glossyTexture;
+GLuint glossyTexture, concreteTexture;
 
 //Functions
 unsigned int loadTexture(char const* path, unsigned int* textureID) {
@@ -47,6 +47,13 @@ void setTexture(Texture text, Shader aShader) {
 		aShader.setInt("tex", 0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, glossyTexture);
+		break;
+	case Texture::Concrete:
+		aShader.setBool("colorOn", !drawTextures);
+		aShader.setBool("textureOn", drawTextures);
+		aShader.setInt("tex", 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, concreteTexture);
 		break;
 	default:
 		std::cout << "Unknown or no textures specified, defaulting to colors only";
