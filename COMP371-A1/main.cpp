@@ -555,13 +555,10 @@ int main(int argc, char* argv[]) {
 	int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
 
 	//Setup models
-	string cubePath = "../VS2017/assets/models/cube.obj";
-	string heraclesPath = "../VS2017/assets/models/heracles.obj";
+	string heraclesPath = "assets/models/heracles.obj";
 
 	int heraclesVertices;
 	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
-	int cubeVertices;
-	GLuint cubeVAO1 = setupModelVBO(cubePath, cubeVertices);
 	//TODO 3 load the models as EBOs instead of only VBOs
 
 	int activeVAOVertices = heraclesVertices;
@@ -633,9 +630,9 @@ int main(int argc, char* argv[]) {
 		//Text Render
 		textShader.use();
 		textShader.setMat4("projectionMatrix", glm::ortho(0.0f, screenWidth, screenHeight, 0.0f));
-		renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
+		//renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
 		//and maybe add a level indicator
-		renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
+		//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
 
 		/*--------------------------------
 			Object Loader
