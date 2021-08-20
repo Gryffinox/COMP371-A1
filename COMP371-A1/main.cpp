@@ -393,8 +393,9 @@ int main(int argc, char* argv[]) {
 		//Text Render
 		textShader.use();
 		textShader.setMat4("projectionMatrix", glm::ortho(0.0f, screenWidth, screenHeight, 0.0f));
-		renderText(textShader, "TIME | 00:00", 100.0f, 100.0f, 0.7f, WHITE);
-		renderText(textShader, "SCORE 000", 1800.0f, 100.0f, .7f, TEAL);
+		renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
+		//and maybe add a level indicator
+		renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
