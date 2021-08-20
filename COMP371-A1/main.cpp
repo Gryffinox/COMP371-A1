@@ -174,12 +174,8 @@ int main(int argc, char* argv[]) {
     	int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
 
     	//Setup models
-    	string cubePath = "../VS2017/assets/models/cube.obj";
-    	string heraclesPath = "../VS2017/assets/models/heracles.obj";
+    	string cubePath = "../assets/models/cube.obj";
 
-    	//TODO 1 load the more interesting model: "heracles.obj"
-    	int heraclesVertices;
-    	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
     	int cubeVertices;
     	GLuint cubeVAO = setupModelVBO(cubePath, cubeVertices);
     	//TODO 3 load the models as EBOs instead of only VBOs
