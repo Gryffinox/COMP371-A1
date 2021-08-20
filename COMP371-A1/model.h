@@ -431,7 +431,7 @@ public:
 };
 
 const float Model::SHUFFLE_SPEED = 2.5f;
-const float Model::WALL_BORDER_THICKNESS = 2;
+const float Model::WALL_BORDER_THICKNESS = 4;
 const float Model::WALL_OFFSET = 5;
 
 #endif /* Model_h */

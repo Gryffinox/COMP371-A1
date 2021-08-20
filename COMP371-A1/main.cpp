@@ -306,6 +306,7 @@ int main(int argc, char* argv[]) {
 	--------------------------------*/
 	drawTextures = true;
 	loadTexture("glossy.jpg", &glossyTexture);
+	loadTexture("concrete.jpg", &concreteTexture);
 
     
     /*--------------------------------
@@ -402,6 +403,7 @@ int main(int argc, char* argv[]) {
 void drawModel(Shader theShader) {
 	setTexture(Texture::Glossy, theShader);
 	models[currentModel].draw(theShader, 0);
+	setTexture(Texture::Concrete, theShader);
 	//Draw one of the 3 walls
 	float yRotation;
 	float zRotation;
