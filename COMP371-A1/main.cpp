@@ -21,6 +21,8 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "OBJloader.h"  //For loading .obj files
+#include "OBJloaderV2.h"  //For loading .obj files using a polygon list format
 
 //Other
 #include "colors.h"
@@ -161,9 +163,34 @@ int main(int argc, char* argv[]) {
 	debugDepthQuad.setInt("depthMap", 0);*/
 
 	/*--------------------------------
-	Temp
+		Temp
 	--------------------------------*/
 	Model tempModel = Model("aModel.txt");
+	
+	/*--------------------------------
+		Object Loader
+	--------------------------------*/
+	// Compile and link shaders here ...
+    	int whiteShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
+
+    	//Setup models
+    	string cubePath = "../VS2017/assets/models/cube.obj";
+    	string heraclesPath = "../VS2017/assets/models/heracles.obj";
+
+    	//TODO 1 load the more interesting model: "heracles.obj"
+    	int heraclesVertices;
+    	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
+    	int cubeVertices;
+    	GLuint cubeVAO = setupModelVBO(cubePath, cubeVertices);
+    	//TODO 3 load the models as EBOs instead of only VBOs
+
+    	int activeVAOVertices = cubeVertices;
+    	GLuint activeVAO = cubeVAO;
+	
+	// Set View and Projection matrices on both shaders
+    	setViewMatrix(whiteShaderProgram, viewMatrix);
+
+    	setProjectionMatrix(whiteShaderProgram, projectionMatrix);
 
 	/*--------------------------------
 		Main Loop / Render Loop
@@ -211,6 +238,25 @@ int main(int argc, char* argv[]) {
 		shader.use();
 		glBindVertexArray(cubeVAO);
 		tempModel.draw(shader, 0);
+		
+		/*--------------------------------
+			Object Loader
+		--------------------------------*/
+		// Draw colored geometry
+        	glUseProgram(whiteShaderProgram);
+		
+		// Set world matrix
+        	glm::mat4 modelWorldMatrix =
+            		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+            		glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+            		glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+        	setWorldMatrix(whiteShaderProgram, modelWorldMatrix);
+		
+		//Draw the stored vertex objects
+        	glBindVertexArray(activeVAO);
+        	glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
+		
+		glBindVertexArray(0);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
