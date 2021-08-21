@@ -91,10 +91,13 @@ std::uniform_int_distribution<int> posNegDist(0, 1);		//pos negative
 /*--------------------------------
 	updateGameState function
 --------------------------------*/
-void updateGameState(float deltaTime) {
+int updateGameState(float deltaTime) {
+    bool scored = false;
+    bool failed = false;
+    
 	//if paused dont do anything
 	if (paused || level > MAX_LEVEL) {
-		return;
+		return 0;
 	}
 	//New level setup
 	//================================
@@ -163,9 +166,11 @@ void updateGameState(float deltaTime) {
 				PTS_LEVEL_DIFFICULTY * (level - 1) + 
 				STREAK_BONUS * currentStreak;
 			currentStreak++;
+            scored = true;
 		}
 		else {
 			currentStreak = 0;
+            failed = true;
 		}
 		level++;
 		//put the game in the post level pause
@@ -187,6 +192,11 @@ void updateGameState(float deltaTime) {
 	timeLeft -= deltaTime * glideAcceleration;
 	travelDistance = (deltaTime * glideAcceleration * postLvlAcceleration) / totalTime;
 	moveScene(travelDistance * TOTAL_DISTANCE);
+    if (failed)
+    {
+        return 2;
+    }
+    return scored;
 }
 
 void moveScene(float distance) {
