@@ -78,6 +78,7 @@ Camera camera;
 Shader shader;
 Shader depthShader;
 Shader textShader;
+Shader dragonShader;
 
 //Text rendering
 Text* text;
@@ -286,7 +287,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	//hide mouse
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	// Set Background Color
 	glClearColor(DARK_BLUE.x, DARK_BLUE.y, DARK_BLUE.z, 1.0f);
 	// Enable Depth Test
@@ -304,6 +305,7 @@ int main(int argc, char* argv[]) {
 	shader = Shader("VertexShader.glsl", "FragmentShader.glsl");
 	depthShader = Shader("VertexShaderDepth.glsl", "FragmentShaderDepth.glsl");
 	textShader = Shader("VertexShaderText.glsl", "FragmentShaderText.glsl");
+    dragonShader = Shader("VertexShaderDragon.glsl", "FragmentShaderDragon.glsl");
 
     /*--------------------------------
         Font Loading
@@ -350,7 +352,7 @@ int main(int argc, char* argv[]) {
 	//debug
 	Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
 	debugDepthQuad.use();
-	debugDepthQuad.setInt("depthMap", 13);
+	debugDepthQuad.setInt("depthMap", 1);
 
 	/*--------------------------------
 	Model Setup
@@ -378,7 +380,7 @@ int main(int argc, char* argv[]) {
 	--------------------------------*/
 
 	//Setup models
-	string heraclesPath = "models/heracles.obj";
+	string heraclesPath = "models/dragon.obj";
 
 	int heraclesVertices;
 	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
@@ -414,6 +416,12 @@ int main(int argc, char* argv[]) {
 		shader.setMat4("projectionMatrix", camera.getProjectionMatrix());
 		shader.setVec3("cameraPos", camera.getPosition());
 
+        dragonShader.use();
+        dragonShader.setMat4("viewMatrix", camera.getViewMatrix());
+        dragonShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
+        dragonShader.setVec3("cameraPos", camera.getPosition());
+
+        
 		//Update Game State
         int status = updateGameState(deltaTime);
         if(status == 1 )
@@ -452,7 +460,7 @@ int main(int argc, char* argv[]) {
 		shader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(shader);
-        drawObject(shader);
+        drawObject(dragonShader);
 
 		//Text Render
 		//textShader.use();
@@ -461,9 +469,10 @@ int main(int argc, char* argv[]) {
 		//and maybe add a level indicator
 		//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
         
+        textShader.use();
         std::stringstream ss;
         ss << timeLeft;
-        text->RenderText("TIME | " + ss.str(), 20.0f, 20.0f, .03f);
+        text->RenderText("TIME | ", 20.0f, 20.0f, 2.f, WHITE);
         
         std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
 
@@ -574,7 +583,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	//Rotate Object
 	//=====================================================================
 	//press W -- rotate forward (x axis)
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && !paused) {
 		int w = (int)'w' - (int)'a';
 		if (LetterKeys[w].firstClick) {
 			rotateForward();
@@ -586,7 +595,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LetterKeys[(int)'w' - (int)'a'].firstClick = true;
 	}
 	//press S -- rotate backwards (x axis)
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && !paused) {
 		int s = (int)'s' - (int)'a';
 		if (LetterKeys[s].firstClick) {
 			rotateBackward();
@@ -598,7 +607,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LetterKeys[(int)'s' - (int)'a'].firstClick = true;
 	}
 	//press A -- rotate left (y axis)
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !paused) {
 		int a = (int)'a' - (int)'a';
 		if (LetterKeys[a].firstClick) {
 			turnLeft();
@@ -610,7 +619,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LetterKeys[(int)'a' - (int)'a'].firstClick = true;
 	}
 	//press D -- rotate right (y axis)
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && !paused) {
 		int d = (int)'d' - (int)'a';
 		if (LetterKeys[d].firstClick) {
 			turnRight();
@@ -622,7 +631,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LetterKeys[(int)'d' - (int)'a'].firstClick = true;
 	}
 	//press Q -- roll left (z axis)
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && !paused) {
 		int q = (int)'q' - (int)'a';
 		if (LetterKeys[q].firstClick) {
 			rollLeft();
@@ -634,7 +643,7 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
 	}
 	//press E -- roll right (z axis)
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !paused) {
 		int e = (int)'e' - (int)'a';
 		if (LetterKeys[e].firstClick) {
 			rollRight();
@@ -843,9 +852,9 @@ void drawObject(Shader aShader)
     // Set world matrix
     glm::mat4 modelMatrix =
         glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-        glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
-    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-20, 0, -30));
+        glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, .5f)) *
+        glm::scale(glm::mat4(1.0f), glm::vec3(1.f));
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, -35));
     glm::mat4 transformationMatrix = translationMatrix * modelMatrix;
     shader.setMat4("worldMatrix", transformationMatrix);
 
