@@ -49,6 +49,7 @@ void getInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void playSound(char* filename, bool repeat);
+void drawObject(Shader aShader);
 
 /*================================================================
 	Globals
@@ -111,6 +112,12 @@ float rotationAnimationTime[3];
 	Sound Engine
 ================================================================*/
 irrklang::ISoundEngine* SoundEngine = irrklang::createIrrKlangDevice();
+
+/*================================================================
+    Object variables;
+================================================================*/
+int activeVAOVertices;
+GLuint activeVAO;
 
 /*==================================================
 	Shadow debug
@@ -377,8 +384,8 @@ int main(int argc, char* argv[]) {
 	GLuint heraclesVAO = setupModelVBO(heraclesPath, heraclesVertices);
 	//TODO 3 load the models as EBOs instead of only VBOs
 
-	int activeVAOVertices = heraclesVertices;
-	GLuint activeVAO = heraclesVAO;
+    activeVAOVertices = heraclesVertices;
+    activeVAO = heraclesVAO;
 
     /*--------------------------------
     Music playback begin
@@ -445,6 +452,7 @@ int main(int argc, char* argv[]) {
 		shader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(shader);
+        drawObject(shader);
 
 		//Text Render
 		//textShader.use();
@@ -458,25 +466,6 @@ int main(int argc, char* argv[]) {
         text->RenderText("TIME | " + ss.str(), 20.0f, 20.0f, .03f);
         
         std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
-
-		/*--------------------------------
-			Object Draw
-		--------------------------------*/
-		// Draw colored geometry
-        shader.use();
-
-		// Set world matrix
-		glm::mat4 modelWorldMatrix =
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
-		shader.setMat4("worldMatrix", modelWorldMatrix);
-
-		//Draw the stored vertex objects
-		glBindVertexArray(activeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
-
-		glBindVertexArray(0);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -845,4 +834,24 @@ void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap) {
 ================================================================*/
 void playSound(char* filename, bool repeat) {
 	SoundEngine->play2D(filename, repeat);
+}
+
+void drawObject(Shader aShader)
+{
+    aShader.use();
+
+    // Set world matrix
+    glm::mat4 modelMatrix =
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+        glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+        glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-20, 0, -30));
+    glm::mat4 transformationMatrix = translationMatrix * modelMatrix;
+    shader.setMat4("worldMatrix", transformationMatrix);
+
+    //Draw the stored vertex objects
+    glBindVertexArray(activeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
+
+    glBindVertexArray(0);
 }
