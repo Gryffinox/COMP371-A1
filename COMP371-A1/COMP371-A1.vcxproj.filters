@@ -67,5 +67,11 @@
     <None Include="VertexShaderText.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="FragmentShaderDragon.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VertexShaderDragon.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -101,6 +101,16 @@ KeyControl LeftMouseBtn;
 KeyControl SpaceBar;
 KeyControl LetterKeys[26];
 
+//dragon caw caw breath fire ooooo very cool
+const float DRAGON_RADIUS = 50.0f;
+const float FLY_TIME = 15.0f;
+const float DRAGON_VERTICAL = 10.0f;
+const float HOVER_TIME = 3.0f;
+float dragonAnglularPositionCircle = 270.0f;	//270 degrees on the xz axis corresponds to the negative z
+float dragonAngularPositionUpDown = 0.0f;
+glm::vec3 dragonPosition = glm::vec3(0.0f, 0.0f, -DRAGON_RADIUS);
+glm::vec3 dragonRotation = glm::vec3(0.0f, 0.0f, 0.0f);
+
 //Variables necessary for animating certain movements
 float rotationAnimationTime[3];
 
@@ -287,7 +297,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	//hide mouse
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	// Set Background Color
 	glClearColor(DARK_BLUE.x, DARK_BLUE.y, DARK_BLUE.z, 1.0f);
 	// Enable Depth Test
@@ -317,6 +327,8 @@ int main(int argc, char* argv[]) {
 	glm::vec3 lightPos = glm::vec3(-10.f, 30.f, 10.f);
 	shader.use();
 	glUniform3fv(shader.getUniform("lightPos"), 1, &lightPos[0]);
+	dragonShader.use();
+	glUniform3fv(dragonShader.getUniform("lightPos"), 1, &lightPos[0]);
 
 	//camera position
 	camera = Camera(DEFAULT_SCR_WIDTH, DEFAULT_SCR_HEIGHT, glm::vec3(6.0f, 1.0f, 10.0f), glm::vec3(-1.0f, -.0f, -4.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -393,8 +405,9 @@ int main(int argc, char* argv[]) {
     Music playback begin
     Downloaded from: https://soundcloud.com/mdkofficial
     --------------------------------*/
-    playSound((char*)"sounds/MDK-Fb.mp3", true);
-   
+	//music diabled because it was too loud
+	//SoundEngine->setSoundVolume(0.01f);
+    //playSound((char*)"sounds/MDK-Fb.mp3", true);
 
 	/*--------------------------------
 		Main Loop / Render Loop
@@ -460,7 +473,76 @@ int main(int argc, char* argv[]) {
 		shader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(shader);
-        drawObject(dragonShader);
+
+		//Dragon go zoom zomm through the sky
+		//animate circular motion
+		/* I have just spent about 3 hours doing the math to figure out how to apply the rotations
+		* to all 3 axes relative to it's position in it's circular motion and it's up down movement
+		* which are independant and i am cracked out on math right now because trigonometry is hard
+		* and i decided to manually figure this all out instead of looking it up
+		*/
+		if (!paused) {
+			//move around in circle
+			//easy
+			//==========================================================
+			//interval of time indicates proportionally how many degrees weve travelled
+			float proportion = deltaTime / FLY_TIME;
+			dragonAnglularPositionCircle -= (proportion * 360.0f);
+			//lock angle between 0 and 360
+			if (dragonAnglularPositionCircle < 0) { dragonAnglularPositionCircle += 360; }
+			//calculate x and z from angle
+			dragonPosition.x = cos(glm::radians(dragonAnglularPositionCircle)) * DRAGON_RADIUS;
+			dragonPosition.z = sin(glm::radians(dragonAnglularPositionCircle)) * DRAGON_RADIUS;
+			
+			//rotate on y to turn dragon to face forward
+			//easy
+			//==========================================================
+			//the dragon is facing forward in its travel so it needs to turn 90 degrees
+			//if we left it as is, or turned 180, it would be facing center of rotation or completely away
+			dragonRotation.y = -(dragonAnglularPositionCircle) - 90;
+
+			//animate up down (moving him up down on a different time interval)
+			//easy
+			//==========================================================
+			proportion = deltaTime / HOVER_TIME;
+			dragonAngularPositionUpDown += (proportion * 360.0f);
+			if (dragonAngularPositionUpDown > 360) { dragonAngularPositionUpDown -= 360; }
+			//we only need to update one axes relative to this independant cycle
+			dragonPosition.y = sin(glm::radians(dragonAngularPositionUpDown)) * DRAGON_VERTICAL;
+			
+			//rotate on x and z
+			//very not easy
+			//==========================================================
+			//the dragon always faces forward to it's rotation is somewhere between -90 and 90 unlike the y axes which is the full 360 degrees
+			//so you need to properly map the 0-360 degree time interval of up down movement to the matching -90 to 90 scale 
+			//which takes care of the dragon tilting up and down to make it look like its facing where its going
+			float xzOverallRotation = (fmod(dragonAngularPositionUpDown, 180) - 90) * (dragonAngularPositionUpDown < 180 ? -1 : 1);
+			//then, this rotation needs to be applied to the 2 axes. however, at different times, more of the rotation will be applied to x or z axes
+			//so you need to calculate these components/portions
+			//there are actually 2 slightly different ways of calculating these portions, which results in similar values but slightly smoother
+			//or sharper animation
+			float xPortion = abs(cos(glm::radians(dragonAnglularPositionCircle)));
+			float zPortion = abs(sin(glm::radians(dragonAnglularPositionCircle)));
+			float sumPortions = xPortion + zPortion;
+			xPortion = xPortion / sumPortions;
+			zPortion = zPortion / sumPortions;
+			//this part is complicated. take the overall rotation, apply the portion factor which is some percentage value between 0 and 100
+			//then, multiply by -1 or 1 whether its in between 90 and 270, or 271 to 89 (looping back from 259 to 0)
+			//the reason for this is because when between range, the rotation is positive, but on the way back, its facing the other way so it needs to be a different value
+			//i couldve kept the sign by not abs the portion value but it would be slightly different. also because of the z angle
+			dragonRotation.x = xzOverallRotation * ((dragonAnglularPositionCircle < 270 && dragonAnglularPositionCircle > 90)? -1: 1) * xPortion;
+			//for the z rotation, its always negative. And I have honestly no clue why but its what works. I think it's due to how all my different circle values
+			//end up criss crossing and matching and because our z axis in the world space is actually technically backwards in a sense
+			dragonRotation.z = -xzOverallRotation * zPortion;
+			//dragonRotation.z = xzOverallRotation * ((dragonAnglularPositionCircle < 360 && dragonAnglularPositionCircle > 180) ? -1 : -1) * zPortion;
+
+			//alternate formula for calculating the proportioning on x and z
+			//formula to match proportions on x: abs(((angle mod 180) - 90) / 90)
+			//float xComponent = abs(((fmod(dragonAnglularPositionCircle, 180)) - 90) / 90);
+			//dragonRotation.x = xzOverallRotation * xComponent * ((dragonAnglularPositionCircle < 270 && dragonAnglularPositionCircle > 90)? -1: 1) * xPortion;
+			//dragonRotation.z = -xzOverallRotation * (1 - xComponent) * zPortion;
+		}
+		drawObject(dragonShader);
 
 		//Text Render
 		//textShader.use();
@@ -469,12 +551,7 @@ int main(int argc, char* argv[]) {
 		//and maybe add a level indicator
 		//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
         
-        textShader.use();
-        std::stringstream ss;
-        ss << timeLeft;
-        text->RenderText("TIME | ", 20.0f, 20.0f, 2.f, WHITE);
-        
-        std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
+        //std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -688,26 +765,6 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	//=====================================================================
 	//Debug Controls
 	//=====================================================================
-	//press 1 to move camera forward
-	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-		models[currentModel].modelTranslation.z += deltaTime * 10;
-		camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f, deltaTime * 10));
-	}
-	//press 2 to move camera backwards
-	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-		models[currentModel].modelTranslation.z -= deltaTime * 10;
-		camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
-	}
-	//C to cycle axes
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-		if (LetterKeys[(int)'c' - (int)'a'].firstClick) {
-			totalTime = 0.0f;
-			LetterKeys[(int)'c' - (int)'a'].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
-		LetterKeys[(int)'c' - (int)'a'].firstClick = true;
-	}
 	//V to print variable states
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
 		if (LetterKeys[(int)'v' - (int)'a'].firstClick) {
@@ -721,9 +778,9 @@ void getInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
 		LetterKeys[(int)'v' - (int)'a'].firstClick = true;
 	}
-	//right mouse + f for free cam -- pan camera in any direction
+	//right mouse -- pan camera in any direction
 	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
 		//Current mouse pos
 		double mousePosX, mousePosY;
 		glfwGetCursorPos(window, &mousePosX, &mousePosY);
@@ -748,9 +805,9 @@ void getInput(GLFWwindow* window, float deltaTime) {
 		RightMouseBtn.firstClick = true;
 	}
 
-	//left-mouse + F for free cam-- zoom in and out.
+	//left-mouse -- zoom in and out.
 	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 		//get y position only, we don't care about x for zooming in
 		double mousePosY;
 		glfwGetCursorPos(window, &mousePosY, &mousePosY);
@@ -850,13 +907,20 @@ void drawObject(Shader aShader)
     aShader.use();
 
     // Set world matrix
-    glm::mat4 modelMatrix =
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, .5f)) *
-        glm::scale(glm::mat4(1.0f), glm::vec3(1.f));
-    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, -35));
+	glm::mat4 rotationMatrix =
+		glm::rotate(glm::mat4(1.0f), glm::radians(dragonRotation.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(dragonRotation.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(dragonRotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
+		rotationMatrix * 
+		glm::scale(glm::mat4(1.0f), glm::vec3(1.f));
+
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), dragonPosition + glm::vec3(0.0f, 8.0f, 0.0f));
     glm::mat4 transformationMatrix = translationMatrix * modelMatrix;
-    shader.setMat4("worldMatrix", transformationMatrix);
+
+    aShader.setMat4("worldMatrix", transformationMatrix);
+	aShader.setMat4("normalVectorRotation", rotationMatrix);
 
     //Draw the stored vertex objects
     glBindVertexArray(activeVAO);

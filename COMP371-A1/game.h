@@ -51,7 +51,7 @@ int modelUp = Axes::posy;		//default up is pointed to sky (pos y)
 int modelRight = Axes::posx;	//remaining direction, from cameras pov is right which is pos x
 
 //Scoreboard
-const int MAX_LEVEL = 20;
+const int MAX_LEVEL = 100;
 const int BASE_SCORE_PER_LEVEL = 100;
 const int PTS_LEVEL_DIFFICULTY = 10;
 const int STREAK_BONUS = 50;
@@ -172,6 +172,7 @@ int updateGameState(float deltaTime) {
 			currentStreak = 0;
             failed = true;
 		}
+		std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << std::endl;
 		level++;
 		//put the game in the post level pause
 		gameState = GameState::PostLevel;
