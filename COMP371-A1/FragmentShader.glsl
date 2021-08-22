@@ -19,6 +19,7 @@ uniform sampler2D shadowMap;
 uniform bool colorOn = true;
 uniform bool textureOn = false;
 uniform bool drawShadows = false;
+uniform bool lightsOff = false;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -71,6 +72,10 @@ void main()
         //texture and color settings
         if (colorOn){
             litColor = litColor * vertexColor;
+        }
+        if (lightsOff)
+        {
+            litColor = vertexColor;
         }
         if(textureOn)
         {

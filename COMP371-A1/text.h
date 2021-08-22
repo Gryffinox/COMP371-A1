@@ -25,24 +25,27 @@ public:
     // holds a list of pre-compiled Characters
     std::map<char, Character> Characters;
     // shader used for text rendering
-    Shader TextShader;
+    Shader* TextShader;
+    float width, height;
     // constructor
-    Text(float width, float height, Shader s);
+    Text(float width, float height, Shader* s);
     // pre-compiles a list of characters from the given font
     void Load(std::string font, unsigned int fontSize);
     // renders a string of text using the precompiled list of characters
-    void RenderText(std::string text, float x, float y, float scale, glm::vec3 color = glm::vec3(1.0f));
+    void RenderText(std::string text, float x, float y, float scale, glm::vec3 color = glm::vec3(1.0f), bool centered = false);
 private:
     // render state
     unsigned int VAO, VBO;
 };
 
-Text::Text(float width, float height, Shader s)
+Text::Text(float width, float height, Shader* s)
 {
     // load and configure shader
-    this->TextShader = s;
-    this->TextShader.setMat4("projection", glm::ortho(0.0f, width, height, 0.0f));
-    this->TextShader.setInt("text", 0);
+    TextShader = s;
+    this->TextShader->setMat4("projection", glm::ortho(0.0f, width, height, 0.0f));
+    this->TextShader->setInt("text", 0);
+    this->width = width;
+    this->height = height;
     // configure VAO/VBO for texture quads
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
@@ -117,16 +120,31 @@ void Text::Load(std::string font, unsigned int fontSize)
     FT_Done_FreeType(ft);
 }
 
-void Text::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
+void Text::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, bool centered)
 {
+    
+    
     // activate corresponding render state
-    this->TextShader.use();
-    this->TextShader.setVec3("textColor", color);
+    this->TextShader->use();
+    this->TextShader->setVec3("textColor", color);
+    this->TextShader->setMat4("projection", glm::ortho(0.0f, width, height, 0.0f));
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->VAO);
 
     // iterate through all characters
     std::string::const_iterator c;
+    if (centered)
+    {
+        float w = 0;
+        for (c = text.begin(); c != text.end(); c++)
+        {
+            Character ch = Characters[*c];
+            float w = ch.Bearing.x * scale;
+            w += ch.Size.x * scale;
+            w += (ch.Advance >> 6) * scale;
+            x -= w/3;
+        }
+    }
     for (c = text.begin(); c != text.end(); c++)
     {
         Character ch = Characters[*c];
