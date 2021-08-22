@@ -32,7 +32,7 @@ public:
     // pre-compiles a list of characters from the given font
     void Load(std::string font, unsigned int fontSize);
     // renders a string of text using the precompiled list of characters
-    void RenderText(std::string text, float x, float y, float scale, glm::vec3 color = glm::vec3(1.0f));
+    void RenderText(std::string text, float x, float y, float scale, glm::vec3 color = glm::vec3(1.0f), bool centered = false);
 private:
     // render state
     unsigned int VAO, VBO;
@@ -120,8 +120,10 @@ void Text::Load(std::string font, unsigned int fontSize)
     FT_Done_FreeType(ft);
 }
 
-void Text::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
+void Text::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, bool centered)
 {
+    
+    
     // activate corresponding render state
     this->TextShader->use();
     this->TextShader->setVec3("textColor", color);
@@ -131,6 +133,18 @@ void Text::RenderText(std::string text, float x, float y, float scale, glm::vec3
 
     // iterate through all characters
     std::string::const_iterator c;
+    if (centered)
+    {
+        float w = 0;
+        for (c = text.begin(); c != text.end(); c++)
+        {
+            Character ch = Characters[*c];
+            float w = ch.Bearing.x * scale;
+            w += ch.Size.x * scale;
+            w += (ch.Advance >> 6) * scale;
+            x -= w/3;
+        }
+    }
     for (c = text.begin(); c != text.end(); c++)
     {
         Character ch = Characters[*c];

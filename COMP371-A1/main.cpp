@@ -45,12 +45,14 @@ using namespace std;
 	Forward Declarations
 ================================================================*/
 void drawModel(Shader theShader);
-void getInput(GLFWwindow* window, float deltaTime);
+int getInput(GLFWwindow* window, float deltaTime, int menu);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void playSound(char* filename, bool repeat);
 void drawObject(Shader aShader);
 void drawSky(GLuint VAO);
+void drawPlatform(GLuint VAO, Shader aShader);
+void drawMenu(GLuint VAO, int menu);
 
 /*================================================================
 	Globals
@@ -121,6 +123,17 @@ irrklang::ISoundEngine* SoundEngine = irrklang::createIrrKlangDevice();
 ================================================================*/
 int activeVAOVertices;
 GLuint activeVAO;
+
+/*================================================================
+    Menu variables;
+================================================================*/
+enum Menu {
+    Gamestart = 0,
+    Controls = 1,
+    Paused = 2,
+    Gameover = 3,
+    None = 4
+};
 
 /*==================================================
 	Shadow debug
@@ -313,7 +326,9 @@ int main(int argc, char* argv[]) {
         Font Loading
     --------------------------------*/
     text = new Text(screenWidth, screenHeight, &textShader);
-    text->Load("fonts/PressStart2P-Regular.ttf", 24);
+    text->Load("fonts/PressStart2P-Regular.ttf", 16);
+    
+    int menu = Menu::Gamestart;
     
 	//Light position
 	glm::vec3 lightPos = glm::vec3(-10.f, 30.f, 10.f);
@@ -375,6 +390,9 @@ int main(int argc, char* argv[]) {
 	drawTextures = true;
 	loadTexture("textures/glossy.jpg", &glossyTexture);
 	loadTexture("textures/concrete.jpg", &concreteTexture);
+    loadTexture("textures/metal.jpeg", &metalTexture);
+    loadTexture("textures/road.jpg", &roadTexture);
+    loadTexture("textures/border.jpg", &borderTexture);
     //skybox textures
     skyboxShader.use();
     loadTexture("textures/skyboxTop.png",&skyboxTextureT);
@@ -419,7 +437,8 @@ int main(int argc, char* argv[]) {
 		lastFrame = currentFrame;
 		// Each frame, reset color of each pixel to glClearColor
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        
+        
 		//Update the camera matrices.
 		camera.updateProjectionViewMatrices();
 		//pass them to the shader
@@ -432,6 +451,8 @@ int main(int argc, char* argv[]) {
         dragonShader.setMat4("viewMatrix", camera.getViewMatrix());
         dragonShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
         dragonShader.setVec3("cameraPos", camera.getPosition());
+        
+        if(!paused){
                 
 		//Update Game State
         int status = updateGameState(deltaTime);
@@ -440,6 +461,8 @@ int main(int argc, char* argv[]) {
             playSound((char*)"sounds/correct.wav", false);
         } else if(status == 2 ) {
             playSound((char*)"sounds/wrong.mp3", false);
+        } else if(status == 3){
+            menu = Menu::Gameover;
         }
 
 		/*--------------------------------
@@ -473,14 +496,23 @@ int main(int argc, char* argv[]) {
 		drawModel(shader);
         drawSky(skyboxVAO);
         drawObject(dragonShader);
+        drawPlatform(whiteCubeVAO, shader);
 
 		//Text Render
-        std::string timeDisplay = "TIME " + std::to_string(timeLeft);
+        std::string timeDisplay = timeLeft > 0 ? "TIME " + std::to_string(timeLeft) : "TIME 0";
         std::string levelDisplay = "LEVEL " + std::to_string(level);
         std::string scoreDisplay = "SCORE " + std::to_string(score);
-        text->RenderText(timeDisplay, 20.0f, 20.0f, 1.f, WHITE);
-        text->RenderText(levelDisplay, 20.0f, 50.0f, 1.f, LIGHT_GREEN);
-        text->RenderText(scoreDisplay, 20.0f, 80.0f, 1.f, PURPLE_NAVY);
+        std::string livesDisplay = "LIVES " + std::to_string(lives);
+        text->RenderText(timeDisplay, 20.0f, 20.0f, 2.f, WHITE);
+        text->RenderText(levelDisplay, 20.0f, 60.0f, 2.f, TEAL);
+        text->RenderText(scoreDisplay, 20.0f, 100.0f, 2.f, LIGHT_GREEN);
+        text->RenderText(livesDisplay, 20.0f, 140.0f, 2.f, MANATEE);
+        text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
+        text->RenderText("press <p> to pause the game", 50.0f, screenHeight - 50, 1.f, WHITE);
+        } else {
+            drawSky(skyboxVAO);
+            drawMenu(whiteCubeVAO, menu);
+        }
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -496,7 +528,7 @@ int main(int argc, char* argv[]) {
 		glfwPollEvents();
 
 		// Handle inputs
-		getInput(window, deltaTime);
+		menu = getInput(window, deltaTime, menu);
 	}
 	// Shutdown GLFW
 	glfwTerminate();
@@ -579,7 +611,8 @@ void drawModel(Shader theShader) {
 void drawSky(GLuint VAO){
     shader.use();
     glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(90, 90, 90));
-    shader.setMat4("worldMatrix", scalingMatrix);
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -30));
+    shader.setMat4("worldMatrix", translationMatrix * scalingMatrix);
     shader.setBool("lightsOff", true);
     glBindVertexArray(VAO);
     setTexture(Texture::SkyboxFl, shader);
@@ -598,223 +631,322 @@ void drawSky(GLuint VAO){
     
 }
 
+void drawPlatform(GLuint VAO, Shader aShader){
+    aShader.use();
+    float width = 25;
+    float thickness = 0.5;
+    float length = 100;
+    float y = -10;
+    glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(width, thickness, length));
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, y, 0));
+    aShader.setMat4("worldMatrix", translationMatrix * scalingMatrix);
+    glBindVertexArray(VAO);
+    //main platform
+    setTexture(Texture::Metal, aShader);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    setTexture(Texture::Border, aShader);
+    for (int i = -2; i<3; i++)
+    {
+        scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(3, thickness, length/5));
+        translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-width/2-1.5, y, -length/5*i));
+        aShader.setMat4("worldMatrix", translationMatrix * scalingMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(3, thickness, length/5));
+        translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(width/2+1.5, y, -length/5*i));
+        aShader.setMat4("worldMatrix", translationMatrix * scalingMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+}
+
+void drawMenu(GLuint VAO, int menu){
+    switch (menu){
+    case Menu::Gamestart:
+            text->RenderText("DRAGON SOMETHING GAME LOL", 50, 400, 4.5, TEAL);
+            text->RenderText("Press <p> to start game", 50, 500, 3, WHITE);
+            text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
+            text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
+        break;
+    case Menu::Gameover:
+            text->RenderText("GAMEOVER", 50, 200, 5, RED);
+            text->RenderText("Press <p> to start game", 50, 300, 3, WHITE);
+            text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
+            text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
+        break;
+    case Menu::Paused:
+            text->RenderText("PAUSED", 50, 200, 5, PURPLE_NAVY);
+            text->RenderText("Press <p> to resume game", 50, 280, 3, WHITE);
+            text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
+            text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
+        break;
+    case Menu::Controls:
+            float y = 50;
+            float offset = 60;
+            text->RenderText("CONTROL MENU", 50, y, 5, PURPLE_NAVY );
+            text->RenderText("Rotate <a> <d> <w> <s> <q> <e>", 50, y+=2*offset, 2, WHITE );
+            text->RenderText("Move camera <u> <j> <k> <h>", 50, y+=offset, 2, WHITE );
+            text->RenderText("Pan camera <Right click> + hold <f>", 50, y+=offset, 2, WHITE );
+            text->RenderText("Toggle music on/off <m>", 50, y+=offset, 2, WHITE );
+            text->RenderText("Music volume <+> <->", 50, y+=offset, 2, WHITE );
+            text->RenderText("Press <p> to resume game", 50, y+=offset, 2, WHITE);
+            text->RenderText("Press <esc> to exit game", 50, y+=offset, 2, WHITE);
+        break;
+    }
+    
+}
+
 /*================================================================
 	Inputs
 ================================================================*/
-void getInput(GLFWwindow* window, float deltaTime) {
-
+int getInput(GLFWwindow* window, float deltaTime, int menu) {
+    
+    
 	//close
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
-
-	//Rotate Object
-	//=====================================================================
-	//press W -- rotate forward (x axis)
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && !paused) {
-		int w = (int)'w' - (int)'a';
-		if (LetterKeys[w].firstClick) {
-			rotateForward();
-			LetterKeys[w].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
-		LetterKeys[(int)'w' - (int)'a'].firstClick = true;
-	}
-	//press S -- rotate backwards (x axis)
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && !paused) {
-		int s = (int)'s' - (int)'a';
-		if (LetterKeys[s].firstClick) {
-			rotateBackward();
-			LetterKeys[s].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
-		LetterKeys[(int)'s' - (int)'a'].firstClick = true;
-	}
-	//press A -- rotate left (y axis)
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !paused) {
-		int a = (int)'a' - (int)'a';
-		if (LetterKeys[a].firstClick) {
-			turnLeft();
-			LetterKeys[a].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
-		LetterKeys[(int)'a' - (int)'a'].firstClick = true;
-	}
-	//press D -- rotate right (y axis)
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && !paused) {
-		int d = (int)'d' - (int)'a';
-		if (LetterKeys[d].firstClick) {
-			turnRight();
-			LetterKeys[d].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
-		LetterKeys[(int)'d' - (int)'a'].firstClick = true;
-	}
-	//press Q -- roll left (z axis)
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && !paused) {
-		int q = (int)'q' - (int)'a';
-		if (LetterKeys[q].firstClick) {
-			rollLeft();
-			LetterKeys[q].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
-		LetterKeys[(int)'q' - (int)'a'].firstClick = true;
-	}
-	//press E -- roll right (z axis)
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !paused) {
-		int e = (int)'e' - (int)'a';
-		if (LetterKeys[e].firstClick) {
-			rollRight();
-			LetterKeys[e].firstClick = false;
-            playSound((char*)"sounds/click.wav", false);
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
-		LetterKeys[(int)'e' - (int)'a'].firstClick = true;
-	}
-	//P to pause game updates
-	//=====================================================================
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-		int p = (int)'p' - (int)'a';
-		if (LetterKeys[p].firstClick) {
-			paused = !paused;
-			LetterKeys[p].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE) {
-		LetterKeys[(int)'p' - (int)'a'].firstClick = true;
-	}
-	//Accelerates the movement of the model towards the wall
-	//=====================================================================
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		if (SpaceBar.firstClick) {
-			glideAcceleration = 3.0f;
-			SpaceBar.firstClick = false;
-		}
-		else {
-			if (glideAcceleration <= 4.0f) {
-				glideAcceleration += 0.05;
-			}
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-		glideAcceleration = 1.0f;
-		SpaceBar.firstClick = true;
-	}
-
-
-	//=====================================================================
-	//Debug Controls
-	//=====================================================================
-	//press 1 to move camera forward
-	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-		models[currentModel].modelTranslation.z += deltaTime * 10;
-		camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f, deltaTime * 10));
-	}
-	//press 2 to move camera backwards
-	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-		models[currentModel].modelTranslation.z -= deltaTime * 10;
-		camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
-	}
-	//C to cycle axes
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-		if (LetterKeys[(int)'c' - (int)'a'].firstClick) {
-			totalTime = 0.0f;
-			LetterKeys[(int)'c' - (int)'a'].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
-		LetterKeys[(int)'c' - (int)'a'].firstClick = true;
-	}
-	//V to print variable states
-	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
-		if (LetterKeys[(int)'v' - (int)'a'].firstClick) {
-			std::cout
-				<< "Wall Direction: " << "\t" << wallDirection << "\t\t" << "Wall Up: " << "\t" << wallUp << "\n"
-				<< "Model Direction: " << "\t" << modelForward << "\t\t" << "Model Up: " << "\t" << modelUp << "\n"
-				<< "====================================================" << "\n";
-			LetterKeys[(int)'v' - (int)'a'].firstClick = false;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
-		LetterKeys[(int)'v' - (int)'a'].firstClick = true;
-	}
-	//right mouse + f for free cam -- pan camera in any direction
-	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-		//Current mouse pos
-		double mousePosX, mousePosY;
-		glfwGetCursorPos(window, &mousePosX, &mousePosY);
-		//reset lastMousePos when we first click since the mouse may have moved while not clicked
-		if (RightMouseBtn.firstClick) {
-			RightMouseBtn.lastMousePosX = mousePosX;
-			RightMouseBtn.lastMousePosY = mousePosY;
-			RightMouseBtn.firstClick = false;
-		}
-
-		//Find difference from last pos
-		double dx = mousePosX - RightMouseBtn.lastMousePosX;
-		double dy = mousePosY - RightMouseBtn.lastMousePosY;
-
-		//Set last to current
-		RightMouseBtn.lastMousePosX = mousePosX;
-		RightMouseBtn.lastMousePosY = mousePosY;
-		camera.panCamera(dx * deltaTime, dy * deltaTime);
-	}
-	//On release, reset right mouse click variable for inital click
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
-		RightMouseBtn.firstClick = true;
-	}
-
-	//left-mouse + F for free cam-- zoom in and out.
-	//=====================================================================
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-		//get y position only, we don't care about x for zooming in
-		double mousePosY;
-		glfwGetCursorPos(window, &mousePosY, &mousePosY);
-		//Reset on first click
-		if (LeftMouseBtn.firstClick) {
-			LeftMouseBtn.lastMousePosY = mousePosY;
-			LeftMouseBtn.firstClick = false;
-		}
-		double dy = mousePosY - LeftMouseBtn.lastMousePosY;
-		LeftMouseBtn.lastMousePosY = mousePosY;
-		camera.zoomCamera(dy * deltaTime);
-	}
-	//On release, reset left mouse click variable for inital click
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-		LeftMouseBtn.firstClick = true;
-	}
-	//Move camera
-	//UHJK
-	//=====================================================================
-	//press U -- move forward
-	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-		camera.moveForward(deltaTime);
-	}
-	//press H -- move left
-	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-		camera.moveLeft(deltaTime);
-	}
-	//press J -- move backward
-	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		camera.moveBack(deltaTime);
-	}
-	//press K -- move right
-	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-		camera.moveRight(deltaTime);
-	}
-
+    //toggle music
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+    //increase volume
+    if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+    //decrease volume
+    if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+    
+    if (menu == Menu::None)
+    {
+        //Rotate Object
+        //=====================================================================
+        //press W -- rotate forward (x axis)
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && !paused) {
+            int w = (int)'w' - (int)'a';
+            if (LetterKeys[w].firstClick) {
+                rotateForward();
+                LetterKeys[w].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
+            LetterKeys[(int)'w' - (int)'a'].firstClick = true;
+        }
+        //press S -- rotate backwards (x axis)
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && !paused) {
+            int s = (int)'s' - (int)'a';
+            if (LetterKeys[s].firstClick) {
+                rotateBackward();
+                LetterKeys[s].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
+            LetterKeys[(int)'s' - (int)'a'].firstClick = true;
+        }
+        //press A -- rotate left (y axis)
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !paused) {
+            int a = (int)'a' - (int)'a';
+            if (LetterKeys[a].firstClick) {
+                turnLeft();
+                LetterKeys[a].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
+            LetterKeys[(int)'a' - (int)'a'].firstClick = true;
+        }
+        //press D -- rotate right (y axis)
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && !paused) {
+            int d = (int)'d' - (int)'a';
+            if (LetterKeys[d].firstClick) {
+                turnRight();
+                LetterKeys[d].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
+            LetterKeys[(int)'d' - (int)'a'].firstClick = true;
+        }
+        //press Q -- roll left (z axis)
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && !paused) {
+            int q = (int)'q' - (int)'a';
+            if (LetterKeys[q].firstClick) {
+                rollLeft();
+                LetterKeys[q].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
+            LetterKeys[(int)'q' - (int)'a'].firstClick = true;
+        }
+        //press E -- roll right (z axis)
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !paused) {
+            int e = (int)'e' - (int)'a';
+            if (LetterKeys[e].firstClick) {
+                rollRight();
+                LetterKeys[e].firstClick = false;
+                playSound((char*)"sounds/click.wav", false);
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
+            LetterKeys[(int)'e' - (int)'a'].firstClick = true;
+        }
+        //P to pause game updates
+        //=====================================================================
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+            int p = (int)'p' - (int)'a';
+            if (LetterKeys[p].firstClick) {
+                paused = !paused;
+                LetterKeys[p].firstClick = false;
+                return Menu::Paused;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE) {
+            LetterKeys[(int)'p' - (int)'a'].firstClick = true;
+        }
+        //Accelerates the movement of the model towards the wall
+        //=====================================================================
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            if (SpaceBar.firstClick) {
+                glideAcceleration = 3.0f;
+                SpaceBar.firstClick = false;
+            }
+            else {
+                if (glideAcceleration <= 4.0f) {
+                    glideAcceleration += 0.05;
+                }
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+            glideAcceleration = 1.0f;
+            SpaceBar.firstClick = true;
+        }
+        
+        
+        //=====================================================================
+        //Debug Controls
+        //=====================================================================
+        //press 1 to move camera forward
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+            models[currentModel].modelTranslation.z += deltaTime * 10;
+            camera.changePosition(camera.getPosition() + glm::vec3(0.0f, 0.0f, deltaTime * 10));
+        }
+        //press 2 to move camera backwards
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+            models[currentModel].modelTranslation.z -= deltaTime * 10;
+            camera.changePosition(camera.getPosition() - glm::vec3(0.0f, 0.0f, deltaTime * 10));
+        }
+        //C to cycle axes
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+            if (LetterKeys[(int)'c' - (int)'a'].firstClick) {
+                totalTime = 0.0f;
+                LetterKeys[(int)'c' - (int)'a'].firstClick = false;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE) {
+            LetterKeys[(int)'c' - (int)'a'].firstClick = true;
+        }
+        //V to print variable states
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+            if (LetterKeys[(int)'v' - (int)'a'].firstClick) {
+                std::cout
+                << "Wall Direction: " << "\t" << wallDirection << "\t\t" << "Wall Up: " << "\t" << wallUp << "\n"
+                << "Model Direction: " << "\t" << modelForward << "\t\t" << "Model Up: " << "\t" << modelUp << "\n"
+                << "====================================================" << "\n";
+                LetterKeys[(int)'v' - (int)'a'].firstClick = false;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
+            LetterKeys[(int)'v' - (int)'a'].firstClick = true;
+        }
+        //right mouse + f for free cam -- pan camera in any direction
+        //=====================================================================
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+            //Current mouse pos
+            double mousePosX, mousePosY;
+            glfwGetCursorPos(window, &mousePosX, &mousePosY);
+            //reset lastMousePos when we first click since the mouse may have moved while not clicked
+            if (RightMouseBtn.firstClick) {
+                RightMouseBtn.lastMousePosX = mousePosX;
+                RightMouseBtn.lastMousePosY = mousePosY;
+                RightMouseBtn.firstClick = false;
+            }
+            
+            //Find difference from last pos
+            double dx = mousePosX - RightMouseBtn.lastMousePosX;
+            double dy = mousePosY - RightMouseBtn.lastMousePosY;
+            
+            //Set last to current
+            RightMouseBtn.lastMousePosX = mousePosX;
+            RightMouseBtn.lastMousePosY = mousePosY;
+            camera.panCamera(dx * deltaTime, dy * deltaTime);
+        }
+        //On release, reset right mouse click variable for inital click
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+            RightMouseBtn.firstClick = true;
+        }
+        
+        //left-mouse + F for free cam-- zoom in and out.
+        //=====================================================================
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+            //get y position only, we don't care about x for zooming in
+            double mousePosY;
+            glfwGetCursorPos(window, &mousePosY, &mousePosY);
+            //Reset on first click
+            if (LeftMouseBtn.firstClick) {
+                LeftMouseBtn.lastMousePosY = mousePosY;
+                LeftMouseBtn.firstClick = false;
+            }
+            double dy = mousePosY - LeftMouseBtn.lastMousePosY;
+            LeftMouseBtn.lastMousePosY = mousePosY;
+            camera.zoomCamera(dy * deltaTime);
+        }
+        //On release, reset left mouse click variable for inital click
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+            LeftMouseBtn.firstClick = true;
+        }
+        //Move camera
+        //UHJK
+        //=====================================================================
+        //press U -- move forward
+        if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+            camera.moveForward(deltaTime);
+        }
+        //press H -- move left
+        if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+            camera.moveLeft(deltaTime);
+        }
+        //press J -- move backward
+        if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+            camera.moveBack(deltaTime);
+        }
+        //press K -- move right
+        if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+            camera.moveRight(deltaTime);
+        }
+    } else {
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            return Menu::Gamestart;
+        }
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+            return Menu::Controls;
+        }
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+            int p = (int)'p' - (int)'a';
+            if (LetterKeys[p].firstClick) {
+                paused = !paused;
+                LetterKeys[p].firstClick = false;
+                return Menu::None;
+            }
+        }
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE) {
+            LetterKeys[(int)'p' - (int)'a'].firstClick = true;
+        }
+        return menu;
+    }
+    return Menu::None;
 }
 
 /*================================================================
@@ -827,6 +959,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	camera.setViewportDimensions(width, height);
 	screenWidth = width;
 	screenHeight = height;
+    text->width = width;
+    text->height = height;
 }
 
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap) {
@@ -884,7 +1018,7 @@ void drawObject(Shader aShader)
         glm::scale(glm::mat4(1.0f), glm::vec3(1.f));
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, -35));
     glm::mat4 transformationMatrix = translationMatrix * modelMatrix;
-    shader.setMat4("worldMatrix", transformationMatrix);
+    aShader.setMat4("worldMatrix", transformationMatrix);
 
     //Draw the stored vertex objects
     glBindVertexArray(activeVAO);

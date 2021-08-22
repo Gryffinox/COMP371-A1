@@ -13,10 +13,10 @@
 
 //Globals
 bool drawTextures;
-enum Texture { Glossy, Concrete, SkyboxT, SkyboxL, SkyboxFr, SkyboxR, SkyboxB, SkyboxFl };
+enum Texture { Glossy, Concrete, SkyboxT, SkyboxL, SkyboxFr, SkyboxR, SkyboxB, SkyboxFl, Metal, Road, Border };
 
 //Texture ints
-GLuint glossyTexture, concreteTexture, skyboxTextureT, skyboxTextureL, skyboxTextureFr, skyboxTextureR, skyboxTextureB, skyboxTextureFl;
+GLuint glossyTexture, concreteTexture, skyboxTextureT, skyboxTextureL, skyboxTextureFr, skyboxTextureR, skyboxTextureB, skyboxTextureFl, metalTexture, roadTexture, borderTexture;
 
 //Functions
 unsigned int loadTexture(char const* path, unsigned int* textureID) {
@@ -96,6 +96,27 @@ void setTexture(Texture text, Shader aShader) {
         aShader.setInt("tex", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, skyboxTextureFl);
+        break;
+    case Texture::Road:
+        aShader.setBool("colorOn", !drawTextures);
+        aShader.setBool("textureOn", drawTextures);
+        aShader.setInt("tex", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, roadTexture);
+        break;
+    case Texture::Metal:
+        aShader.setBool("colorOn", !drawTextures);
+        aShader.setBool("textureOn", drawTextures);
+        aShader.setInt("tex", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, metalTexture);
+        break;
+    case Texture::Border:
+        aShader.setBool("colorOn", !drawTextures);
+        aShader.setBool("textureOn", drawTextures);
+        aShader.setInt("tex", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, borderTexture);
         break;
 	default:
 		std::cout << "Unknown or no textures specified, defaulting to colors only";

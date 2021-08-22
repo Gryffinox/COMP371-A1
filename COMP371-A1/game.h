@@ -58,6 +58,7 @@ const int STREAK_BONUS = 50;
 int level = 1;
 int score = 0;
 int currentStreak = 0;
+int lives = 5;
 
 //Timer
 const float INITIAL_TIME = 12.f;
@@ -70,8 +71,8 @@ float glideAcceleration = 1.0f;		//when the user whishes to accelerate the anima
 float waitTime = 0.0f;				//time between levels
 
 //Game State
-enum GameState { NewLevel = 0, InLevel = 1, PostLevel = 2 };
-float gameState = GameState::NewLevel;
+enum GameState { NewLevel = 0, InLevel = 1, PostLevel = 2, NewGame = 4 };
+float gameState = GameState::NewGame;
 
 //other game values
 float travelDistance = 0.0f;		//the distance the model will travel for the current game interval
@@ -99,6 +100,14 @@ int updateGameState(float deltaTime) {
 	if (paused || level > MAX_LEVEL) {
 		return 0;
 	}
+    if(gameState == GameState::NewGame)
+    {
+        gameState = GameState::NewLevel;
+        level = 1;
+        score = 0;
+        currentStreak = 0;
+        lives = 5;
+    }
 	//New level setup
 	//================================
 	if (gameState == GameState::NewLevel) {
@@ -171,6 +180,14 @@ int updateGameState(float deltaTime) {
 		else {
 			currentStreak = 0;
             failed = true;
+            if(--lives==0)
+            {
+                //gameover
+                paused = !paused;
+                gameState = GameState::NewGame;
+                return 3;
+            }
+            
 		}
 		level++;
 		//put the game in the post level pause
