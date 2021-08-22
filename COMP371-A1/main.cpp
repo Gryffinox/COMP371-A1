@@ -496,7 +496,6 @@ int main(int argc, char* argv[]) {
 		drawModel(shader);
         drawSky(skyboxVAO);
         drawObject(dragonShader);
-        drawPlatform(whiteCubeVAO, shader);
 
 		//Text Render
         std::string timeDisplay = timeLeft > 0 ? "TIME " + std::to_string(timeLeft) : "TIME 0";
