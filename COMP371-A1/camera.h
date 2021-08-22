@@ -44,6 +44,8 @@ private:
 	glm::vec3 default_position;
 	glm::vec3 default_front;
 	glm::vec3 default_up;
+	float default_yaw;
+	float default_pitch;
 public:
 
 	//========================================================
@@ -60,6 +62,8 @@ public:
 		right = glm::normalize(glm::cross(front, worldUp));
 		//euler angles
 		calculateEulerAngles();
+		default_yaw = yaw;
+		default_pitch = pitch;
 		//viewport dimensions
 		width = inWidth;
 		height = inHeight;
@@ -78,6 +82,8 @@ public:
 		right = glm::normalize(glm::cross(front, worldUp));
 		//euler angles
 		calculateEulerAngles();
+		default_yaw = yaw;
+		default_pitch = pitch;
 		//viewport dimensions
 		width = inWidth;
 		height = inHeight;
@@ -156,8 +162,9 @@ public:
 	void lookAt(float inYaw, float inPitch) {
 		yaw = inYaw;
 		pitch = inPitch;
+		float clamp = 10.0f;
 		// Clamp vertical angle to [-89, 89] degrees
-		pitch = std::max(-89.0f, std::min(89.0f, pitch));
+		pitch = std::max(default_pitch - clamp, std::min(default_pitch + clamp, pitch));
 		//Reset horizontal angle values
 		if (yaw > 360) {
 			yaw -= 360;
@@ -165,6 +172,8 @@ public:
 		else if (yaw < -360) {
 			yaw += 360;
 		}
+		yaw = std::max(default_yaw - clamp, std::min(default_yaw + clamp, yaw));
+		//yaw clamp
 		float radYaw = glm::radians(yaw);
 		float radPitch = glm::radians(pitch);
 		//Set front facing vector based on yaw and pitch angles
@@ -211,6 +220,6 @@ const float Camera::PAN_CONSTANT = 5.f;
 const float Camera::ROTATION_SPEED_MULT = 25.f;
 const float Camera::DEFAULT_FOV = 60.f;
 const float Camera::SPEED = 7.5f;
-const float Camera::CAMERA_ANGULAR_SPEED = 45.f;
+const float Camera::CAMERA_ANGULAR_SPEED = 15.f;
 
 #endif /* camera_h */
