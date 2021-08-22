@@ -50,6 +50,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void playSound(char* filename, bool repeat);
 void drawObject(Shader aShader);
+void drawSky(GLuint VAO);
 
 /*================================================================
 	Globals
@@ -79,6 +80,7 @@ Shader shader;
 Shader depthShader;
 Shader textShader;
 Shader dragonShader;
+Shader skyboxShader;
 
 //Text rendering
 Text* text;
@@ -330,6 +332,7 @@ int main(int argc, char* argv[]) {
 	--------------------------------*/
 	int fuschiaCubeVAO = createCubeVAO(FUSCHIA);
 	int whiteCubeVAO = createCubeVAO();
+    int skyboxVAO = createSkyboxVAO(WHITE);
 
 	/*--------------------------------
 		Shadow Setup
@@ -352,7 +355,7 @@ int main(int argc, char* argv[]) {
 	//debug
 	Shader debugDepthQuad("VertexShaderDebug.glsl", "FragmentShaderDebug.glsl");
 	debugDepthQuad.use();
-	debugDepthQuad.setInt("depthMap", 1);
+	debugDepthQuad.setInt("depthMap", 10);
 
 	/*--------------------------------
 	Model Setup
@@ -372,7 +375,16 @@ int main(int argc, char* argv[]) {
 	drawTextures = true;
 	loadTexture("textures/glossy.jpg", &glossyTexture);
 	loadTexture("textures/concrete.jpg", &concreteTexture);
-
+    //skybox textures
+    skyboxShader.use();
+    loadTexture("textures/skyboxTop.png",&skyboxTextureT);
+    loadTexture("textures/skyboxLeft.png",&skyboxTextureL);
+    loadTexture("textures/skyboxFront.png",&skyboxTextureFr);
+    loadTexture("textures/skyboxRight.png",&skyboxTextureR);
+    loadTexture("textures/skyboxBack.png",&skyboxTextureB);
+    loadTexture("textures/skyboxFloor.png",&skyboxTextureFl);
+    
+    
 
 
 	/*--------------------------------
@@ -393,7 +405,7 @@ int main(int argc, char* argv[]) {
     Music playback begin
     Downloaded from: https://soundcloud.com/mdkofficial
     --------------------------------*/
-    playSound((char*)"sounds/MDK-Fb.mp3", true);
+    //playSound((char*)"sounds/MDK-Fb.mp3", true);
    
 
 	/*--------------------------------
@@ -420,8 +432,7 @@ int main(int argc, char* argv[]) {
         dragonShader.setMat4("viewMatrix", camera.getViewMatrix());
         dragonShader.setMat4("projectionMatrix", camera.getProjectionMatrix());
         dragonShader.setVec3("cameraPos", camera.getPosition());
-
-        
+                
 		//Update Game State
         int status = updateGameState(deltaTime);
         if(status == 1 )
@@ -452,14 +463,14 @@ int main(int argc, char* argv[]) {
 		glViewport(0, 0, screenWidth, screenHeight);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		shader.use();
 		// Draw geometry
+        shader.use();
 		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightSpaceMatrix"), 1, GL_FALSE, &lightSpaceMatrix[0][0]);
 		glActiveTexture(GL_TEXTURE15);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
-		shader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(shader);
+        drawSky(skyboxVAO);
         drawObject(dragonShader);
 
 		//Text Render
@@ -469,19 +480,21 @@ int main(int argc, char* argv[]) {
 		//and maybe add a level indicator
 		//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
         
-        textShader.use();
         std::stringstream ss;
         ss << timeLeft;
         text->RenderText("TIME | ", 20.0f, 20.0f, 2.f, WHITE);
         
-        std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
+        if(!paused){
+            std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
+        }
+       
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
 		/*debugDepthQuad.use();
 		debugDepthQuad.setFloat("near_plane", near_plane);
 		debugDepthQuad.setFloat("far_plane", far_plane);
-		glActiveTexture(GL_TEXTURE13);
+		glActiveTexture(GL_TEXTURE10);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		renderQuad();*/
 
@@ -568,6 +581,28 @@ void drawModel(Shader theShader) {
 		exit(EXIT_FAILURE);
 		break;
 	}
+}
+
+void drawSky(GLuint VAO){
+    shader.use();
+    glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(90, 90, 90));
+    shader.setMat4("worldMatrix", scalingMatrix);
+    shader.setBool("lightsOff", true);
+    glBindVertexArray(VAO);
+    setTexture(Texture::SkyboxFl, shader);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    setTexture(Texture::SkyboxT, shader);
+    glDrawArrays(GL_TRIANGLES, 6, 6);
+    setTexture(Texture::SkyboxL, shader);
+    glDrawArrays(GL_TRIANGLES, 12, 6);
+    setTexture(Texture::SkyboxR, shader);
+    glDrawArrays(GL_TRIANGLES, 18, 6);
+    setTexture(Texture::SkyboxFr, shader);
+    glDrawArrays(GL_TRIANGLES, 24, 6);
+    setTexture(Texture::SkyboxB, shader);
+    glDrawArrays(GL_TRIANGLES, 30, 6);
+    shader.setBool("lightsOff", false);
+    
 }
 
 /*================================================================
