@@ -424,8 +424,7 @@ int main(int argc, char* argv[]) {
     Downloaded from: https://soundcloud.com/mdkofficial
     --------------------------------*/
     //playSound((char*)"sounds/MDK-Fb.mp3", true);
-   
-
+    
 	/*--------------------------------
 		Main Loop / Render Loop
 	--------------------------------*/
@@ -462,6 +461,7 @@ int main(int argc, char* argv[]) {
         } else if(status == 2 ) {
             playSound((char*)"sounds/wrong.mp3", false);
         } else if(status == 3){
+            playSound((char*)"sounds/wrong.mp3", false);
             menu = Menu::Gameover;
         }
 
@@ -668,7 +668,7 @@ void drawMenu(GLuint VAO, int menu){
         break;
     case Menu::Gameover:
             text->RenderText("GAMEOVER", 50, 200, 5, RED);
-            text->RenderText("Press <p> to start game", 50, 300, 3, WHITE);
+            text->RenderText("Press <p> to play again", 50, 300, 3, WHITE);
             text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
             text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
         break;
@@ -684,9 +684,7 @@ void drawMenu(GLuint VAO, int menu){
             text->RenderText("CONTROL MENU", 50, y, 5, PURPLE_NAVY );
             text->RenderText("Rotate <a> <d> <w> <s> <q> <e>", 50, y+=2*offset, 2, WHITE );
             text->RenderText("Move camera <u> <j> <k> <h>", 50, y+=offset, 2, WHITE );
-            text->RenderText("Pan camera <Right click> + hold <f>", 50, y+=offset, 2, WHITE );
             text->RenderText("Toggle music on/off <m>", 50, y+=offset, 2, WHITE );
-            text->RenderText("Music volume <+> <->", 50, y+=offset, 2, WHITE );
             text->RenderText("Press <p> to resume game", 50, y+=offset, 2, WHITE);
             text->RenderText("Press <esc> to exit game", 50, y+=offset, 2, WHITE);
         break;
@@ -824,7 +822,7 @@ int getInput(GLFWwindow* window, float deltaTime, int menu) {
             SpaceBar.firstClick = true;
         }
         
-        
+        /*
         //=====================================================================
         //Debug Controls
         //=====================================================================
@@ -861,6 +859,7 @@ int getInput(GLFWwindow* window, float deltaTime, int menu) {
         if (glfwGetKey(window, GLFW_KEY_V) == GLFW_RELEASE) {
             LetterKeys[(int)'v' - (int)'a'].firstClick = true;
         }
+        */
         //right mouse + f for free cam -- pan camera in any direction
         //=====================================================================
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
