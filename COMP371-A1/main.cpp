@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
     /*--------------------------------
         Font Loading
     --------------------------------*/
-    text = new Text(screenWidth, screenHeight, textShader);
+    text = new Text(screenWidth, screenHeight, &textShader);
     text->Load("fonts/PressStart2P-Regular.ttf", 24);
     
 	//Light position
@@ -455,6 +455,7 @@ int main(int argc, char* argv[]) {
 		depthShader.use();
 		glBindVertexArray(whiteCubeVAO);
 		drawModel(depthShader);
+        drawObject(depthShader);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		//Regular draw pass
@@ -474,20 +475,12 @@ int main(int argc, char* argv[]) {
         drawObject(dragonShader);
 
 		//Text Render
-		//textShader.use();
-		//textShader.setMat4("projectionMatrix", glm::ortho(0.0f, screenWidth, screenHeight, 0.0f));
-		//renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
-		//and maybe add a level indicator
-		//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
-        
-        std::stringstream ss;
-        ss << timeLeft;
-        text->RenderText("TIME | ", 20.0f, 20.0f, 2.f, WHITE);
-        
-        if(!paused){
-            std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
-        }
-       
+        std::string timeDisplay = "TIME " + std::to_string(timeLeft);
+        std::string levelDisplay = "LEVEL " + std::to_string(level);
+        std::string scoreDisplay = "SCORE " + std::to_string(score);
+        text->RenderText(timeDisplay, 20.0f, 20.0f, 1.f, WHITE);
+        text->RenderText(levelDisplay, 20.0f, 50.0f, 1.f, LIGHT_GREEN);
+        text->RenderText(scoreDisplay, 20.0f, 80.0f, 1.f, PURPLE_NAVY);
 
 		// render Depth map to quad for visual debugging
 		// ---------------------------------------------
@@ -495,7 +488,7 @@ int main(int argc, char* argv[]) {
 		debugDepthQuad.setFloat("near_plane", near_plane);
 		debugDepthQuad.setFloat("far_plane", far_plane);
 		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glBindTexture(GL_TEXTURE_2D, glossyTexture);
 		renderQuad();*/
 
 		// End Frame
