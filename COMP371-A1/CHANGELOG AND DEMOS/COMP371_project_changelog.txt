@@ -1,0 +1,35 @@
+COMP371 - Final Project Changelog
+Team 14 - Last minute formed
+
+Amanda Simard		26624081
+Calvin Lee		    40128163
+Charalampos Chochos	40005090
+Dante Di Domenico	40125704
+Yee Ho Chow		    40032218
+
+
+Changes in resubmission (submitted by Calvin Lee)
+- Fixed text rendering (Amanda)
+- Added a skybox (Amanda)
+- Added dragon model animation (Calvin)
+- Added model rotation animation (Calvin)
+- Added function to draw a platform (Amanda)
+- Opted NOT to draw platform as we judged it was distracting to game play (Amanda & Calvin)
+- Added menus:
+    -- Game start menu
+    -- Game control menu
+    -- Game pause menu
+    -- Gameove menu
+    -- (Amanda)
+- Added text rendering for score, time, level (Amanda)
+- Added game mechanics for losing lives and game over as means of hit/miss feedback (Amanda)
+-Adjusted volume on audio as additional hit/miss feeback (Calvin)
+- Modified gameover screen to show final score (Calvin)
+- Changed point mechanics to increase pts for acceleration (Calvin)
+- Modified camera movements: 
+    -- clamped pan
+    -- disabled movement controls
+    -- (Calvin)
+- Adjusted sound control to toggle sound on/off and adjust volume on key press (Calvin)
+- Adjusted timer formatting to show only 1 decimal (Calvin)
+
