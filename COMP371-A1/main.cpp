@@ -45,14 +45,15 @@ using namespace std;
 	Forward Declarations
 ================================================================*/
 void drawModel(Shader theShader);
+void drawSky(GLuint VAO);
+void drawPlatform(GLuint VAO, Shader aShader);
+void drawMenu(GLuint VAO, int menu);
 int getInput(GLFWwindow* window, float deltaTime, int menu);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void createShadowDepthMap(GLuint& depthMapFBO, GLuint& depthMap);
 void playSound(char* filename, bool repeat);
 void drawObject(Shader aShader);
-void drawSky(GLuint VAO);
-void drawPlatform(GLuint VAO, Shader aShader);
-void drawMenu(GLuint VAO, int menu);
+void animate(float deltaTime);
 
 /*================================================================
 	Globals
@@ -65,8 +66,6 @@ const float DEFAULT_SCR_WIDTH = 1024.0f;
 const float DEFAULT_SCR_HEIGHT = 768.0f;
 const float SHADOW_WIDTH = 4096.f;
 const float SHADOW_HEIGHT = 4096.f;
-
-const float ANIMATION_TIME = 0.4f;	//how much time should one animation take at most
 
 /*--------------------------------
 	Variables
@@ -114,6 +113,13 @@ float dragonAnglularPositionCircle = 270.0f;	//270 degrees on the xz axis corres
 float dragonAngularPositionUpDown = 0.0f;
 glm::vec3 dragonPosition = glm::vec3(0.0f, 0.0f, -DRAGON_RADIUS);
 glm::vec3 dragonRotation = glm::vec3(0.0f, 0.0f, 0.0f);
+
+//animation things or something
+const float ANIMATION_TIME = 0.1f;
+const double TURN_90DEG = 90.0;
+bool currentlyAnimating = false;
+int animationDirection = 0;
+double degreesTurned = 0.0f;
 
 /*================================================================
 	MORE INCLUDES because global variables required idk I'm in crank mode
@@ -412,9 +418,6 @@ int main(int argc, char* argv[]) {
 	loadTexture("textures/skyboxBack.png", &skyboxTextureB);
 	loadTexture("textures/skyboxFloor.png", &skyboxTextureFl);
 
-
-
-
 	/*--------------------------------
 		Object Loader
 	--------------------------------*/
@@ -477,6 +480,9 @@ int main(int argc, char* argv[]) {
 				playSound((char*)"sounds/wrong.mp3", false);
 				menu = Menu::Gameover;
 			}
+
+			//update animations for rotations
+			animate(deltaTime);
 
 			/*--------------------------------
 			Draw scene
@@ -580,14 +586,9 @@ int main(int argc, char* argv[]) {
 			drawObject(dragonShader);
 
 			//Text Render
-			//textShader.use();
-			//textShader.setMat4("projectionMatrix", glm::ortho(0.0f, screenWidth, screenHeight, 0.0f));
-			//renderText(textShader, "TIME | " << timeLeft, 100.0f, 100.0f, 0.7f, WHITE);
-			//and maybe add a level indicator
-			//renderText(textShader, "SCORE " << score, 1800.0f, 100.0f, .7f, TEAL);
-
-			//std::cout << "SCORE: " << score << "\t\tLEVEL: " << level << "\t\tTIMER: " << timeLeft << std::endl;
-			std::string timeDisplay = timeLeft > 0 ? "TIME " + std::to_string(timeLeft) : "TIME 0";
+			std::string timeStr;
+			timeStr = std::to_string(timeLeft).substr(0, std::to_string(timeLeft).size() - 5);
+			std::string timeDisplay = timeLeft > 0 ? "TIME " + timeStr : "TIME 0";
 			std::string levelDisplay = "LEVEL " + std::to_string(level);
 			std::string scoreDisplay = "SCORE " + std::to_string(score);
 			std::string livesDisplay = "LIVES " + std::to_string(lives);
@@ -602,15 +603,6 @@ int main(int argc, char* argv[]) {
 			drawSky(skyboxVAO);
 			drawMenu(whiteCubeVAO, menu);
 		}
-
-		// render Depth map to quad for visual debugging
-		// ---------------------------------------------
-		/*debugDepthQuad.use();
-		debugDepthQuad.setFloat("near_plane", near_plane);
-		debugDepthQuad.setFloat("far_plane", far_plane);
-		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_2D, glossyTexture);
-		renderQuad();*/
 
 		// End Frame
 		glfwSwapBuffers(window);
@@ -720,6 +712,7 @@ void drawSky(GLuint VAO) {
 
 }
 
+//not called because a platform wouldnt make sense in the thematic of the game
 void drawPlatform(GLuint VAO, Shader aShader) {
 	aShader.use();
 	float width = 25;
@@ -749,14 +742,16 @@ void drawPlatform(GLuint VAO, Shader aShader) {
 void drawMenu(GLuint VAO, int menu) {
 	switch (menu) {
 	case Menu::Gamestart:
-		text->RenderText("DRAGON SOMETHING GAME LOL", 50, 400, 4.5, TEAL);
-		text->RenderText("Press <p> to start game", 50, 500, 3, WHITE);
+		text->RenderText("Wasted Space Dragon", 50, 400, 2.5, TEAL);
+		text->RenderText("Press <p> to start game", 50, 500, 2, WHITE);
 		text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
 		text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
 		break;
 	case Menu::Gameover:
 		text->RenderText("GAMEOVER", 50, 200, 5, RED);
-		text->RenderText("Press <p> to play again", 50, 300, 3, WHITE);
+		text->RenderText("Level: " + std::to_string(level), 50, 300, 3.0f, FUSCHIA);
+		text->RenderText("Score: " + std::to_string(score), 50, 400, 3.0f, FUSCHIA);
+		text->RenderText("Press <p> to play again", 50, screenHeight - 140, 2.f, WHITE);
 		text->RenderText("press <esc> to exit", 50.0f, screenHeight - 80, 1.f, WHITE);
 		text->RenderText("press <c> to see the game controls", 50.0f, screenHeight - 50, 1.f, WHITE);
 		break;
@@ -771,7 +766,8 @@ void drawMenu(GLuint VAO, int menu) {
 		float offset = 60;
 		text->RenderText("CONTROL MENU", 50, y, 5, PURPLE_NAVY);
 		text->RenderText("Rotate <a> <d> <w> <s> <q> <e>", 50, y += 2 * offset, 2, WHITE);
-		text->RenderText("Move camera <u> <j> <k> <h>", 50, y += offset, 2, WHITE);
+		text->RenderText("Accelerate model <space>", 50, y += offset, 2, WHITE);
+		//text->RenderText("Move camera <u> <j> <k> <h>", 50, y += offset, 2, WHITE);
 		text->RenderText("Toggle sound on/off <m>", 50, y += offset, 2, WHITE);
 		text->RenderText("Press <p> to resume game", 50, y += offset, 2, WHITE);
 		text->RenderText("Press <esc> to exit game", 50, y += offset, 2, WHITE);
@@ -832,72 +828,90 @@ int getInput(GLFWwindow* window, float deltaTime, int menu) {
 		//Rotate Object
 		//=====================================================================
 		//press W -- rotate forward (x axis)
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int w = (int)'w' - (int)'a';
 			if (LetterKeys[w].firstClick) {
 				rotateForward();
 				LetterKeys[w].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::negx;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) {
 			LetterKeys[(int)'w' - (int)'a'].firstClick = true;
 		}
 		//press S -- rotate backwards (x axis)
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int s = (int)'s' - (int)'a';
 			if (LetterKeys[s].firstClick) {
 				rotateBackward();
 				LetterKeys[s].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::posx;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) {
 			LetterKeys[(int)'s' - (int)'a'].firstClick = true;
 		}
 		//press A -- rotate left (y axis)
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int a = (int)'a' - (int)'a';
 			if (LetterKeys[a].firstClick) {
 				turnLeft();
 				LetterKeys[a].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::posy;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) {
 			LetterKeys[(int)'a' - (int)'a'].firstClick = true;
 		}
 		//press D -- rotate right (y axis)
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int d = (int)'d' - (int)'a';
 			if (LetterKeys[d].firstClick) {
 				turnRight();
 				LetterKeys[d].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::negy;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) {
 			LetterKeys[(int)'d' - (int)'a'].firstClick = true;
 		}
 		//press Q -- roll left (z axis)
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int q = (int)'q' - (int)'a';
 			if (LetterKeys[q].firstClick) {
 				rollLeft();
 				LetterKeys[q].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::posz;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) {
 			LetterKeys[(int)'q' - (int)'a'].firstClick = true;
 		}
 		//press E -- roll right (z axis)
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !paused) {
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !paused && !currentlyAnimating) {
 			int e = (int)'e' - (int)'a';
 			if (LetterKeys[e].firstClick) {
 				rollRight();
 				LetterKeys[e].firstClick = false;
 				playSound((char*)"sounds/click.wav", false);
+				//animations for rotations
+				currentlyAnimating = true;
+				animationDirection = Axes::negz;
 			}
 		}
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) {
@@ -924,8 +938,8 @@ int getInput(GLFWwindow* window, float deltaTime, int menu) {
 				SpaceBar.firstClick = false;
 			}
 			else {
-				if (glideAcceleration <= 4.0f) {
-					glideAcceleration += 0.05;
+				if (glideAcceleration <= 6.0f) {
+					glideAcceleration += 0.04;
 				}
 			}
 		}
@@ -1000,25 +1014,25 @@ int getInput(GLFWwindow* window, float deltaTime, int menu) {
 			RightMouseBtn.firstClick = true;
 		}
 
-		//Move camera
-		//UHJK
-		//=====================================================================
-		//press U -- move forward
-		if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
-			camera.moveForward(deltaTime);
-		}
-		//press H -- move left
-		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-			camera.moveLeft(deltaTime);
-		}
-		//press J -- move backward
-		if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-			camera.moveBack(deltaTime);
-		}
-		//press K -- move right
-		if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-			camera.moveRight(deltaTime);
-		}
+		////Move camera
+		////UHJK
+		////=====================================================================
+		////press U -- move forward
+		//if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+		//	camera.moveForward(deltaTime);
+		//}
+		////press H -- move left
+		//if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+		//	camera.moveLeft(deltaTime);
+		//}
+		////press J -- move backward
+		//if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+		//	camera.moveBack(deltaTime);
+		//}
+		////press K -- move right
+		//if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		//	camera.moveRight(deltaTime);
+		//}
 	}
 	else {
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
@@ -1101,6 +1115,9 @@ void playSound(char* filename, bool repeat) {
 	SoundEngine->play2D(filename, repeat);
 }
 
+/*================================================================
+	Dragon Draw
+================================================================*/
 void drawObject(Shader aShader) {
 	aShader.use();
 
@@ -1125,4 +1142,88 @@ void drawObject(Shader aShader) {
 	glDrawArrays(GL_TRIANGLES, 0, activeVAOVertices);
 
 	glBindVertexArray(0);
+}
+
+/*================================================================
+	Animate rotation
+================================================================*/
+void animate(float deltaTime) {
+	//nothing to do
+	if (!currentlyAnimating) {
+		return;
+	}
+
+	//setup
+	double proportion = deltaTime / ANIMATION_TIME;
+	double turnAmount = proportion * TURN_90DEG;
+	degreesTurned += turnAmount;
+	//last rotation pass
+	if (degreesTurned > 90) {
+		//reset the visual animations rotation vector
+		models[currentModel].modelRotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		//reset variables
+		currentlyAnimating = false;
+		degreesTurned = 0.0f;
+	}
+	switch (animationDirection) {
+		//rotate forward
+	case Axes::negx:
+		//actually rotate the object now internally and not just visually
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(-90.0f, Model::xAxis);
+		}
+		//rotate visually
+		else {
+			models[currentModel].modelRotation = glm::vec3(-degreesTurned, 0.0f, 0.0f);
+		}
+		break;
+		//rotate backwards
+	case Axes::posx:
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(90.0f, Model::xAxis);
+		}
+		else {
+			models[currentModel].modelRotation = glm::vec3(degreesTurned, 0.0f, 0.0f);
+		}
+		break;
+		//turn left
+	case Axes::posy:
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(90.0f, Model::yAxis);
+		}
+		else {
+			models[currentModel].modelRotation = glm::vec3(0.0f, degreesTurned, 0.0f);
+		}
+		break;
+		//turn right
+	case Axes::negy:
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(-90.0f, Model::yAxis);
+		}
+		else {
+			models[currentModel].modelRotation = glm::vec3(0.0f, -degreesTurned, 0.0f);
+		}
+		break;
+		//roll left
+	case Axes::posz:
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(90.0f, Model::zAxis);
+		}
+		else {
+			models[currentModel].modelRotation = glm::vec3(0.0f, 0.0f, degreesTurned);
+		}
+		break;
+		//roll right
+	case Axes::negz:
+		if (!currentlyAnimating) {
+			models[currentModel].rotateModel(-90.0f, Model::zAxis);
+		}
+		else {
+			models[currentModel].modelRotation = glm::vec3(0.0f, 0.0f, -degreesTurned);
+		}
+		break;
+	default:
+		std::cout << "OOPSIE POOPSIE THE FEEDBACK POINTS WERE TOO STRONG" << "\n";
+		break;
+	}
 }

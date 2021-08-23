@@ -59,6 +59,7 @@ int level = 1;
 int score = 0;
 int currentStreak = 0;
 int lives = 5;
+float accelerateBonus = 0.0f;
 
 //Timer
 const float INITIAL_TIME = 12.f;
@@ -114,6 +115,8 @@ int updateGameState(float deltaTime) {
 		gameState = GameState::InLevel;
 		//reset camera position
 		camera.reset();
+		//every level reset accelerate bonus
+		accelerateBonus = 0;
 		int direction, up, rng;
 		//Select the model to use, and reset it
 		//----------------
@@ -128,12 +131,30 @@ int updateGameState(float deltaTime) {
 		for (int i = 0; i < RND_SPINS; i++) {
 			rng = spinsDist(rndGenerator);	//spin in a random direction
 			switch (rng) {
-			case 0: rotateForward(); break;
-			case 1: rotateBackward(); break;
-			case 2: turnLeft(); break;
-			case 3: turnRight(); break;
-			case 4: rollLeft(); break;
-			case 5: rollRight(); break;
+			case 0: 
+				rotateForward(); 
+				models[currentModel].rotateModel(-90.0f, Model::xAxis);
+				break;
+			case 1: 
+				rotateBackward(); 
+				models[currentModel].rotateModel(90.0f, Model::xAxis);
+				break;
+			case 2: 
+				turnLeft(); 
+				models[currentModel].rotateModel(90.0f, Model::yAxis);
+				break;
+			case 3: 
+				turnRight(); 
+				models[currentModel].rotateModel(-90.0f, Model::yAxis);
+				break;
+			case 4: 
+				rollLeft(); 
+				models[currentModel].rotateModel(90.0f, Model::zAxis);
+				break;
+			case 5: 
+				rollRight(); 
+				models[currentModel].rotateModel(-90.0f, Model::zAxis); 
+				break;
 			default:
 				std::cout << "Something went wrong in updateGameState in game.h";
 				exit(EXIT_FAILURE);
@@ -172,8 +193,9 @@ int updateGameState(float deltaTime) {
 			//increment score by base, level and streak
 			score += 
 				BASE_SCORE_PER_LEVEL + 
-				PTS_LEVEL_DIFFICULTY * (level - 1) + 
-				STREAK_BONUS * currentStreak;
+				(PTS_LEVEL_DIFFICULTY * (level - 1)) + 
+				(STREAK_BONUS * currentStreak) +
+				accelerateBonus;
 			currentStreak++;
             scored = true;
 		}
@@ -205,11 +227,14 @@ int updateGameState(float deltaTime) {
 			gameState = GameState::NewLevel;
 		}
 	}
-	//Update Timer and scene
+	//Update Timer and scene and accelerate bonus
 	//===========================
 	timeLeft -= deltaTime * glideAcceleration;
 	travelDistance = (deltaTime * glideAcceleration * postLvlAcceleration) / totalTime;
 	moveScene(travelDistance * TOTAL_DISTANCE);
+	if (glideAcceleration >= 1.0f) {
+		accelerateBonus += glideAcceleration / 20;
+	}
     if (failed)
     {
         return 2;
@@ -226,8 +251,6 @@ void moveScene(float distance) {
 }
 
 void rotateForward() {
-	//rotate the model forward
-	models[currentModel].rotateModel(-90.0f, Model::xAxis);
 	//update the game variables(swaps the values)
 	int modelForwardSwap = modelForward;
 	modelForward = modelUp;
@@ -235,8 +258,6 @@ void rotateForward() {
 }
 
 void rotateBackward() {
-	//rotate model backwards
-	models[currentModel].rotateModel(90.0f, Model::xAxis);
 	//game variable update
 	int modelForwardSwap = modelForward;
 	modelForward = -modelUp;
@@ -244,8 +265,6 @@ void rotateBackward() {
 }
 
 void turnLeft() {
-	//turn front of model to the left
-	models[currentModel].rotateModel(90.0f, Model::yAxis);
 	//game variable update
 	int modelForwardSwap = modelForward;
 	modelForward = modelRight;
@@ -253,8 +272,6 @@ void turnLeft() {
 }
 
 void turnRight() {
-	//rotate front of model to the right
-	models[currentModel].rotateModel(-90.0f, Model::yAxis);
 	//game variable update
 	int modelForwardSwap = modelForward;
 	modelForward = -modelRight;
@@ -262,8 +279,6 @@ void turnRight() {
 }
 
 void rollLeft() {
-	//roll model on to its left side
-	models[currentModel].rotateModel(90.0f, Model::zAxis);
 	//game variable update
 	int modelRightSwap = modelRight;
 	modelRight = -modelUp;
@@ -271,8 +286,6 @@ void rollLeft() {
 }
 
 void rollRight() {
-	//roll model on to its right side
-	models[currentModel].rotateModel(-90.0f, Model::zAxis);
 	//game variable update
 	int modelRightSwap = modelRight;
 	modelRight = modelUp;

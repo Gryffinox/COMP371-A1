@@ -24,6 +24,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="text.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="vao.h" />
   </ItemGroup>
